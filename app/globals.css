@@ -74,11 +74,10 @@
 
 @layer base {
   * {
-    border: var(--border);
+    @apply border-border;
   }
   body {
-    color: hsl(var(--foreground));
-    background-color: hsl(var(--background));
+    @apply bg-background text-foreground;
   }
 }
 
