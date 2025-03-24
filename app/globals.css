@@ -1,26 +1,199 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 142 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 142 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 142 47% 11%;
+
+    --primary: 142 76% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 150 40% 96.1%;
+    --secondary-foreground: 142 47% 11%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --muted: 150 40% 96.1%;
+    --muted-foreground: 145 16.3% 46.9%;
+
+    --accent: 150 40% 96.1%;
+    --accent-foreground: 142 47% 11%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 144 31.8% 91.4%;
+    --input: 144 31.8% 91.4%;
+    --ring: 142 76% 45%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 142 47% 14%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 142 47% 14%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 142 76% 45%;
+    --primary-foreground: 0 0% 10%;
+
+    --secondary: 147 32.6% 17.5%;
+    --secondary-foreground: 0 0% 98%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 10%;
+
+    --muted: 147 32.6% 17.5%;
+    --muted-foreground: 145 20.2% 65.1%;
+
+    --accent: 147 32.6% 17.5%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 147 32.6% 17.5%;
+    --input: 147 32.6% 17.5%;
+    --ring: 142 76% 45%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    border: var(--border);
+  }
+  body {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
+  }
+}
+
+.message-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.8),
+    hsl(var(--primary))
+  );
+}
+
+.ai-message-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--secondary) / 0.9),
+    hsl(var(--secondary))
+  );
+}
+
+.dark .ai-message-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--secondary) / 0.7),
+    hsl(var(--secondary))
+  );
+}
+
+/* Typing cursor animation */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Character-by-character typing animation */
+.typing-animation {
+  display: inline-block;
+  opacity: 0;
+  animation: fadeIn 0.1s forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Cursor blink animation */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background-color: currentColor;
+  animation: blink 1s infinite;
+}
+
+/* Task animations */
+.task-container {
+  max-height: 300px;
+  overflow: hidden;
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--card-rgb), 0) 0%,
+    rgba(var(--card-rgb), 0.05) 10%,
+    rgba(var(--card-rgb), 0.1) 100%
+  );
+  transform: translateY(0);
+  opacity: 1;
+  transition: all 0.5s ease;
+}
+
+.task-removing {
+  max-height: 0;
+  margin: 0 !important;
+  padding: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--destructive-rgb), 0.05) 0%,
+    rgba(var(--destructive-rgb), 0) 100%
+  );
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+.task-visible {
+  animation: task-appear 0.5s ease forwards;
+}
+
+@keyframes task-appear {
+  from {
+    max-height: 0;
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    max-height: 300px;
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+:root {
+  --card-rgb: 255, 255, 255;
+  --destructive-rgb: 239, 68, 68;
+}
+
+.dark {
+  --card-rgb: 30, 41, 59;
+  --destructive-rgb: 248, 113, 113;
 }
