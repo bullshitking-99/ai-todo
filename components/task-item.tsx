@@ -1,39 +1,57 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Pencil, Trash2, CheckCircle, MoreHorizontal, X, Save } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import {
+  Pencil,
+  Trash2,
+  CheckCircle,
+  MoreHorizontal,
+  X,
+  Save,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 // Task type definition
-type TaskStatus = "normal" | "active" | "passive"
+type TaskStatus = "normal" | "active" | "passive";
 
 interface Task {
-  id: string
-  title: string
-  description: string
-  progress: number
-  completed: boolean
-  status: TaskStatus
+  id: string;
+  title: string;
+  description: string;
+  progress: number;
+  completed: boolean;
+  status: TaskStatus;
 }
 
 interface TaskItemProps {
-  task: Task
-  onDelete: (id: string) => void
-  onComplete: (id: string) => void
-  onUpdate: (task: Task) => void
-  onStatusChange: (id: string, status: TaskStatus) => void
+  task: Task;
+  onDelete: (id: string) => void;
+  onComplete: (id: string) => void;
+  onUpdate: (task: Task) => void;
+  onStatusChange: (id: string, status: TaskStatus) => void;
 }
 
-export default function TaskItem({ task, onDelete, onComplete, onUpdate, onStatusChange }: TaskItemProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editedTitle, setEditedTitle] = useState(task.title)
-  const [editedDescription, setEditedDescription] = useState(task.description)
-  const [editedProgress, setEditedProgress] = useState(task.progress)
+export default function TaskItem({
+  task,
+  onDelete,
+  onComplete,
+  onUpdate,
+  onStatusChange,
+}: TaskItemProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(task.title);
+  const [editedDescription, setEditedDescription] = useState(task.description);
+  const [editedProgress, setEditedProgress] = useState(task.progress);
 
   const handleSave = () => {
     onUpdate({
@@ -43,35 +61,39 @@ export default function TaskItem({ task, onDelete, onComplete, onUpdate, onStatu
       progress: editedProgress,
       // Status remains unchanged during edits
       status: task.status,
-    })
-    setIsEditing(false)
-  }
+    });
+    setIsEditing(false);
+  };
 
   const handleCancel = () => {
-    setEditedTitle(task.title)
-    setEditedDescription(task.description)
-    setEditedProgress(task.progress)
-    setIsEditing(false)
-  }
+    setEditedTitle(task.title);
+    setEditedDescription(task.description);
+    setEditedProgress(task.progress);
+    setIsEditing(false);
+  };
 
   // Determine card styling based on status
   const getCardClasses = () => {
     switch (task.status) {
       case "active":
-        return "border-primary border-2 shadow-md"
+        return "border-primary border-2 shadow-md";
       case "passive":
-        return "opacity-60"
+        return "opacity-60";
       default:
-        return ""
+        return "";
     }
-  }
+  };
 
   return (
     <Card className={`p-4 transition-all hover:shadow-md ${getCardClasses()}`}>
       {isEditing ? (
         // Edit mode
         <div className="space-y-3">
-          <Input value={editedTitle} onChange={(e) => setEditedTitle(e.target.value)} className="font-medium" />
+          <Input
+            value={editedTitle}
+            onChange={(e) => setEditedTitle(e.target.value)}
+            className="font-medium"
+          />
           <Textarea
             value={editedDescription}
             onChange={(e) => setEditedDescription(e.target.value)}
@@ -84,7 +106,9 @@ export default function TaskItem({ task, onDelete, onComplete, onUpdate, onStatu
               min="0"
               max="100"
               value={editedProgress}
-              onChange={(e) => setEditedProgress(Number.parseInt(e.target.value))}
+              onChange={(e) =>
+                setEditedProgress(Number.parseInt(e.target.value))
+              }
               className="flex-1"
             />
           </div>
@@ -103,7 +127,9 @@ export default function TaskItem({ task, onDelete, onComplete, onUpdate, onStatu
           <div className="flex justify-between items-start mb-2">
             <div>
               <h3 className="font-medium text-foreground">{task.title}</h3>
-              <p className="text-sm text-muted-foreground">{task.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {task.description}
+              </p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -123,13 +149,22 @@ export default function TaskItem({ task, onDelete, onComplete, onUpdate, onStatu
                 >
                   <CheckCircle className="h-4 w-4 mr-2" /> Complete
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDelete(task.id)} className="text-destructive">
+                <DropdownMenuItem
+                  onClick={() => onDelete(task.id)}
+                  className="text-destructive"
+                >
                   <Trash2 className="h-4 w-4 mr-2" /> Delete
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusChange(task.id, "active")} disabled={task.status === "active"}>
+                <DropdownMenuItem
+                  onClick={() => onStatusChange(task.id, "active")}
+                  disabled={task.status === "active"}
+                >
                   Set Active
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStatusChange(task.id, "normal")} disabled={task.status === "normal"}>
+                <DropdownMenuItem
+                  onClick={() => onStatusChange(task.id, "normal")}
+                  disabled={task.status === "normal"}
+                >
                   Set Normal
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -147,7 +182,10 @@ export default function TaskItem({ task, onDelete, onComplete, onUpdate, onStatu
               <span>Progress</span>
               <span>{task.progress}%</span>
             </div>
-            <Progress value={task.progress} className="h-2" indicatorClassName={task.completed ? "bg-success" : ""} />
+            <Progress
+              value={task.progress}
+              className={`h-2 ${task.completed ? "[&>div]:bg-success" : ""}`}
+            />
           </div>
 
           {task.completed && (
@@ -159,6 +197,5 @@ export default function TaskItem({ task, onDelete, onComplete, onUpdate, onStatu
         </>
       )}
     </Card>
-  )
+  );
 }
-
