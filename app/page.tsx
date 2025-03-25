@@ -1,6 +1,6 @@
-import TodoPanel from "@/components/todo-panel"
-import ChatPanel from "@/components/chat-panel"
-import { ThemeToggle } from "@/components/theme-toggle"
+import TodoPanel from "@/components/todo-panel";
+import ChatPanel from "@/components/chat-panel";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
   return (
@@ -11,6 +11,5 @@ export default function Home() {
         <ThemeToggle />
       </div>
     </main>
-  )
+  );
 }
-

@@ -1,65 +1,27 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { PlusCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import TaskItem from "./task-item"
-
-// Task type definition
-type TaskStatus = "normal" | "active" | "passive"
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  progress: number
-  completed: boolean
-  status: TaskStatus
-}
+import { PlusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import TaskItem from "./task-item";
+import { Task, useTaskStore } from "@/lib/store";
+import { useState } from "react";
 
 export default function TodoPanel() {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: "1",
-      title: "Design System",
-      description: "Create a consistent design system for the application",
-      progress: 75,
-      completed: false,
-      status: "active",
-    },
-    {
-      id: "2",
-      title: "User Authentication",
-      description: "Implement login and registration functionality",
-      progress: 100,
-      completed: true,
-      status: "passive",
-    },
-    {
-      id: "3",
-      title: "Dashboard Layout",
-      description: "Design and implement the main dashboard layout",
-      progress: 40,
-      completed: false,
-      status: "normal",
-    },
-    {
-      id: "4",
-      title: "API Integration",
-      description: "Connect frontend with backend API endpoints",
-      progress: 20,
-      completed: false,
-      status: "normal",
-    },
-  ])
-
-  const [newTaskTitle, setNewTaskTitle] = useState("")
-  const [taskToRemove, setTaskToRemove] = useState<string | null>(null)
+  const {
+    tasks,
+    addTask: addTaskToStore,
+    deleteTask: deleteTaskFromStore,
+    completeTask: completeTaskInStore,
+    updateTask: updateTaskInStore,
+    updateTaskStatus: updateTaskStatusInStore,
+  } = useTaskStore();
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [taskToRemove, setTaskToRemove] = useState<string | null>(null);
 
   const addTask = () => {
-    if (newTaskTitle.trim() === "") return
+    if (newTaskTitle.trim() === "") return;
 
     const newTask: Task = {
       id: Date.now().toString(),
@@ -68,46 +30,31 @@ export default function TodoPanel() {
       progress: 0,
       completed: false,
       status: "normal",
-    }
+    };
 
-    setTasks([...tasks, newTask])
-    setNewTaskTitle("")
-  }
+    addTaskToStore(newTask);
+    setNewTaskTitle("");
+  };
 
   const deleteTask = (id: string) => {
-    // Mark the task for removal animation
-    setTaskToRemove(id)
-
-    // Remove after animation completes
+    setTaskToRemove(id);
     setTimeout(() => {
-      setTasks(tasks.filter((task) => task.id !== id))
-      setTaskToRemove(null)
-    }, 500) // Match this with CSS transition duration
-  }
+      deleteTaskFromStore(id);
+      setTaskToRemove(null);
+    }, 500);
+  };
 
   const completeTask = (id: string) => {
-    setTasks(tasks.map((task) => (task.id === id ? { ...task, completed: true, progress: 100 } : task)))
-  }
+    completeTaskInStore(id);
+  };
 
   const updateTask = (updatedTask: Task) => {
-    // Ensure completed status matches progress
-    const isCompleted = updatedTask.progress === 100
+    updateTaskInStore(updatedTask);
+  };
 
-    setTasks(
-      tasks.map((task) =>
-        task.id === updatedTask.id
-          ? {
-              ...updatedTask,
-              completed: isCompleted,
-            }
-          : task,
-      ),
-    )
-  }
-
-  const updateTaskStatus = (id: string, status: TaskStatus) => {
-    setTasks(tasks.map((task) => (task.id === id ? { ...task, status } : task)))
-  }
+  const updateTaskStatus = (id: string, status: Task["status"]) => {
+    updateTaskStatusInStore(id, status);
+  };
 
   return (
     <div className="w-1/2 border-r border-border p-6 overflow-y-auto bg-background">
@@ -135,7 +82,9 @@ export default function TodoPanel() {
           {tasks.map((task) => (
             <div
               key={task.id}
-              className={`task-container ${task.id === taskToRemove ? "task-removing" : "task-visible"}`}
+              className={`task-container ${
+                task.id === taskToRemove ? "task-removing" : "task-visible"
+              }`}
             >
               <TaskItem
                 task={task}
@@ -149,6 +98,5 @@ export default function TodoPanel() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

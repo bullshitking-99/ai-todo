@@ -1,20 +1,21 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { Send } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useState, useRef, useEffect } from "react";
+import { Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Task, useTaskStore } from "@/lib/store";
 
 interface Message {
-  id: string
-  content: string
-  sender: "user" | "ai"
-  isStreaming?: boolean
-  fullContent?: string
-  streamedChars?: number
+  id: string;
+  content: string;
+  sender: "user" | "ai";
+  isStreaming?: boolean;
+  fullContent?: string;
+  streamedChars?: number;
 }
 
 export default function ChatPanel() {
@@ -24,11 +25,43 @@ export default function ChatPanel() {
       content: "Hello! How can I help you with your tasks today?",
       sender: "ai",
     },
-  ])
+  ]);
 
-  const [inputValue, setInputValue] = useState("")
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const [inputValue, setInputValue] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { tasks, addTask, deleteTask, completeTask, updateTaskStatus } =
+    useTaskStore();
+
+  // Handle task operations based on message content
+  const handleTaskOperation = (message: string) => {
+    if (message.toLowerCase() === "add task") {
+      const newTask: Task = {
+        id: tasks.length.toString(),
+        title: "New Task from Chat",
+        description: "Task created via chat interface",
+        progress: 0,
+        completed: false,
+        status: "normal",
+      };
+      addTask(newTask);
+      return "Task added successfully!";
+    } else if (message.toLowerCase().startsWith("complete task")) {
+      const taskId = "1"; // For demo, complete the first task
+      completeTask(taskId);
+      return "Task marked as complete!";
+    } else if (message.toLowerCase().startsWith("delete task")) {
+      const taskId = "1"; // For demo, delete the first task
+      deleteTask(taskId);
+      return "Task deleted successfully!";
+    } else if (message.toLowerCase().startsWith("update status")) {
+      const taskId = "1"; // For demo, update the first task
+      updateTaskStatus(taskId, "active");
+      return "Task status updated!";
+    }
+    return "i dont understand that";
+  };
 
   // Simulate AI response with character-by-character typing effect
   const simulateResponse = (userMessage: string) => {
@@ -37,21 +70,16 @@ export default function ChatPanel() {
       id: Date.now().toString(),
       content: userMessage,
       sender: "user",
-    }
+    };
 
-    setMessages((prev) => [...prev, newUserMessage])
-    setInputValue("")
+    setMessages((prev) => [...prev, newUserMessage]);
+    setInputValue("");
+
+    // Check for task operations
+    const taskResponse = handleTaskOperation(userMessage);
 
     // Add AI message with streaming effect
-    const responseId = (Date.now() + 1).toString()
-    const responses = [
-      "I'm analyzing your request...",
-      "Based on your tasks, I recommend prioritizing the Design System task since it's already in progress.",
-      "Would you like me to help you break down any specific task into smaller steps?",
-    ]
-
-    // Choose a response
-    const fullResponse = responses[Math.floor(Math.random() * responses.length)]
+    const responseId = (Date.now() + 1).toString();
 
     // Add initial empty AI message
     setTimeout(() => {
@@ -62,72 +90,76 @@ export default function ChatPanel() {
           content: "",
           sender: "ai",
           isStreaming: true,
-          fullContent: fullResponse,
+          fullContent: taskResponse,
           streamedChars: 0,
         },
-      ])
+      ]);
 
       // Start streaming characters
-      let charIndex = 0
+      let charIndex = 0;
 
       // Clear any existing interval
       if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current)
+        clearInterval(streamingIntervalRef.current);
       }
 
       // Set new interval for character-by-character typing
       streamingIntervalRef.current = setInterval(() => {
-        if (charIndex >= fullResponse.length) {
+        if (charIndex >= taskResponse.length) {
           if (streamingIntervalRef.current) {
-            clearInterval(streamingIntervalRef.current)
+            clearInterval(streamingIntervalRef.current);
           }
 
-          setMessages((prev) => prev.map((msg) => (msg.id === responseId ? { ...msg, isStreaming: false } : msg)))
-          return
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === responseId ? { ...msg, isStreaming: false } : msg
+            )
+          );
+          return;
         }
 
-        charIndex++
+        charIndex++;
 
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === responseId
               ? {
                   ...msg,
-                  content: fullResponse.substring(0, charIndex),
+                  content: taskResponse.substring(0, charIndex),
                   streamedChars: charIndex,
                 }
-              : msg,
-          ),
-        )
-      }, 30) // Adjust speed of typing
-    }, 500)
-  }
+              : msg
+          )
+        );
+      }, 30); // Adjust speed of typing
+    }, 500);
+  };
 
   const handleSendMessage = () => {
-    if (inputValue.trim() === "") return
-    simulateResponse(inputValue)
-  }
+    if (inputValue.trim() === "") return;
+    simulateResponse(inputValue);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+      e.preventDefault();
+      handleSendMessage();
     }
-  }
+  };
 
   // Auto scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // Clean up interval on unmount
   useEffect(() => {
     return () => {
       if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current)
+        clearInterval(streamingIntervalRef.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   return (
     <div className="w-1/2 flex flex-col h-full bg-background">
@@ -141,7 +173,9 @@ export default function ChatPanel() {
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`${message.sender === "user" ? "flex justify-end" : "block"} animate-message-fade-in`}
+              className={`${
+                message.sender === "user" ? "flex justify-end" : "block"
+              } animate-message-fade-in`}
             >
               {message.sender === "user" ? (
                 // User message (bubble on right)
@@ -185,6 +219,5 @@ export default function ChatPanel() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
