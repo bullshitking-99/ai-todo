@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Task, useTaskStore } from "@/lib/store";
+import { getAIResponse } from "@/lib/llm/api";
 
 interface Message {
   id: string;
@@ -34,37 +35,8 @@ export default function ChatPanel() {
   const { tasks, addTask, deleteTask, completeTask, updateTaskStatus } =
     useTaskStore();
 
-  // Handle task operations based on message content
-  const handleTaskOperation = (message: string) => {
-    if (message.toLowerCase() === "add task") {
-      const newTask: Task = {
-        id: tasks.length.toString(),
-        title: "New Task from Chat",
-        description: "Task created via chat interface",
-        progress: 0,
-        completed: false,
-        status: "normal",
-      };
-      addTask(newTask);
-      return "Task added successfully!";
-    } else if (message.toLowerCase().startsWith("complete task")) {
-      const taskId = "1"; // For demo, complete the first task
-      completeTask(taskId);
-      return "Task marked as complete!";
-    } else if (message.toLowerCase().startsWith("delete task")) {
-      const taskId = "1"; // For demo, delete the first task
-      deleteTask(taskId);
-      return "Task deleted successfully!";
-    } else if (message.toLowerCase().startsWith("update status")) {
-      const taskId = "1"; // For demo, update the first task
-      updateTaskStatus(taskId, "active");
-      return "Task status updated!";
-    }
-    return "i dont understand that";
-  };
-
-  // Simulate AI response with character-by-character typing effect
-  const simulateResponse = (userMessage: string) => {
+  // Handle AI response and task operations
+  const handleAIResponse = async (userMessage: string) => {
     // Add user message
     const newUserMessage: Message = {
       id: Date.now().toString(),
@@ -75,69 +47,83 @@ export default function ChatPanel() {
     setMessages((prev) => [...prev, newUserMessage]);
     setInputValue("");
 
-    // Check for task operations
-    const taskResponse = handleTaskOperation(userMessage);
-
-    // Add AI message with streaming effect
+    // Add initial AI message with loading state
     const responseId = (Date.now() + 1).toString();
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: responseId,
+        content: "",
+        sender: "ai",
+        isStreaming: true,
+      },
+    ]);
 
-    // Add initial empty AI message
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: responseId,
-          content: "",
-          sender: "ai",
-          isStreaming: true,
-          fullContent: taskResponse,
-          streamedChars: 0,
-        },
-      ]);
+    try {
+      // Get AI response
+      const availableActions = {
+        addTask: addTask.toString(),
+        deleteTask: deleteTask.toString(),
+        completeTask: completeTask.toString(),
+        updateTaskStatus: updateTaskStatus.toString(),
+      };
+      const response = await getAIResponse(
+        userMessage,
+        tasks,
+        availableActions
+      );
 
-      // Start streaming characters
-      let charIndex = 0;
+      // Update AI message with response
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === responseId
+            ? {
+                ...msg,
+                content: response.message,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
 
-      // Clear any existing interval
-      if (streamingIntervalRef.current) {
-        clearInterval(streamingIntervalRef.current);
-      }
-
-      // Set new interval for character-by-character typing
-      streamingIntervalRef.current = setInterval(() => {
-        if (charIndex >= taskResponse.length) {
-          if (streamingIntervalRef.current) {
-            clearInterval(streamingIntervalRef.current);
-          }
-
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === responseId ? { ...msg, isStreaming: false } : msg
-            )
-          );
-          return;
+      // Execute action if provided
+      if (response.action) {
+        const { name, params } = response.action;
+        switch (name) {
+          case "addTask":
+            addTask(params);
+            break;
+          case "deleteTask":
+            deleteTask(params.id);
+            break;
+          case "completeTask":
+            completeTask(params.id);
+            break;
+          case "updateTaskStatus":
+            updateTaskStatus(params.id, params.status);
+            break;
         }
-
-        charIndex++;
-
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === responseId
-              ? {
-                  ...msg,
-                  content: taskResponse.substring(0, charIndex),
-                  streamedChars: charIndex,
-                }
-              : msg
-          )
-        );
-      }, 30); // Adjust speed of typing
-    }, 500);
+      }
+    } catch (error) {
+      // Update AI message with error
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === responseId
+            ? {
+                ...msg,
+                content: "Sorry, I encountered an error. Please try again.",
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+      console.error("AI Response Error:", error);
+    }
   };
 
   const handleSendMessage = () => {
     if (inputValue.trim() === "") return;
-    simulateResponse(inputValue);
+    handleAIResponse(inputValue);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

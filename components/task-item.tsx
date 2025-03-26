@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useTaskStore } from "@/lib/store";
 
 // Task type definition
 type TaskStatus = "normal" | "active" | "passive";
@@ -35,26 +36,18 @@ interface Task {
 
 interface TaskItemProps {
   task: Task;
-  onDelete: (id: string) => void;
-  onComplete: (id: string) => void;
-  onUpdate: (task: Task) => void;
-  onStatusChange: (id: string, status: TaskStatus) => void;
 }
 
-export default function TaskItem({
-  task,
-  onDelete,
-  onComplete,
-  onUpdate,
-  onStatusChange,
-}: TaskItemProps) {
+export default function TaskItem({ task }: TaskItemProps) {
+  const { deleteTask, completeTask, updateTask } = useTaskStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
   const [editedDescription, setEditedDescription] = useState(task.description);
   const [editedProgress, setEditedProgress] = useState(task.progress);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const handleSave = () => {
-    onUpdate({
+    updateTask({
       ...task,
       title: editedTitle,
       description: editedDescription,
@@ -74,14 +67,22 @@ export default function TaskItem({
 
   // Determine card styling based on status
   const getCardClasses = () => {
+    const baseClasses = isRemoving ? "task-removing" : "task-visible";
     switch (task.status) {
       case "active":
-        return "border-primary border-2 shadow-md";
+        return `${baseClasses} border-primary border-2 shadow-md`;
       case "passive":
-        return "opacity-60";
+        return `${baseClasses} opacity-60`;
       default:
-        return "";
+        return baseClasses;
     }
+  };
+
+  const handleDelete = (id: string) => {
+    setIsRemoving(true);
+    setTimeout(() => {
+      deleteTask(id);
+    }, 500);
   };
 
   return (
@@ -143,35 +144,17 @@ export default function TaskItem({
                   <Pencil className="h-4 w-4 mr-2" /> Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => onComplete(task.id)}
+                  onClick={() => completeTask(task.id)}
                   disabled={task.completed}
                   className="text-success"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" /> Complete
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => onDelete(task.id)}
+                  onClick={() => handleDelete(task.id)}
                   className="text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-2" /> Delete
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onStatusChange(task.id, "active")}
-                  disabled={task.status === "active"}
-                >
-                  Set Active
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onStatusChange(task.id, "normal")}
-                  disabled={task.status === "normal"}
-                >
-                  Set Normal
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onStatusChange(task.id, "passive")}
-                  disabled={task.status === "passive"}
-                >
-                  Set Passive
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

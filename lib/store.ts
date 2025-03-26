@@ -23,7 +23,7 @@ interface TaskStore {
 export const useTaskStore = create<TaskStore>((set) => ({
   tasks: [
     {
-      id: "1",
+      id: "0",
       title: "Design System",
       description: "Create a consistent design system for the application",
       progress: 75,

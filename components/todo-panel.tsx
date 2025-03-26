@@ -9,16 +9,8 @@ import { Task, useTaskStore } from "@/lib/store";
 import { useState } from "react";
 
 export default function TodoPanel() {
-  const {
-    tasks,
-    addTask: addTaskToStore,
-    deleteTask: deleteTaskFromStore,
-    completeTask: completeTaskInStore,
-    updateTask: updateTaskInStore,
-    updateTaskStatus: updateTaskStatusInStore,
-  } = useTaskStore();
+  const { tasks, addTask: addTaskToStore } = useTaskStore();
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [taskToRemove, setTaskToRemove] = useState<string | null>(null);
 
   const addTask = () => {
     if (newTaskTitle.trim() === "") return;
@@ -34,26 +26,6 @@ export default function TodoPanel() {
 
     addTaskToStore(newTask);
     setNewTaskTitle("");
-  };
-
-  const deleteTask = (id: string) => {
-    setTaskToRemove(id);
-    setTimeout(() => {
-      deleteTaskFromStore(id);
-      setTaskToRemove(null);
-    }, 500);
-  };
-
-  const completeTask = (id: string) => {
-    completeTaskInStore(id);
-  };
-
-  const updateTask = (updatedTask: Task) => {
-    updateTaskInStore(updatedTask);
-  };
-
-  const updateTaskStatus = (id: string, status: Task["status"]) => {
-    updateTaskStatusInStore(id, status);
   };
 
   return (
@@ -80,19 +52,8 @@ export default function TodoPanel() {
 
         <div className="space-y-4 flex-1 overflow-y-auto">
           {tasks.map((task) => (
-            <div
-              key={task.id}
-              className={`task-container ${
-                task.id === taskToRemove ? "task-removing" : "task-visible"
-              }`}
-            >
-              <TaskItem
-                task={task}
-                onDelete={deleteTask}
-                onComplete={completeTask}
-                onUpdate={updateTask}
-                onStatusChange={updateTaskStatus}
-              />
+            <div key={task.id}>
+              <TaskItem task={task} />
             </div>
           ))}
         </div>
