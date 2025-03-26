@@ -1,6 +1,8 @@
 import { chain } from "@/lib/llm/chatChain";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs"; // ✅ 禁用 Edge Runtime，使用 Node.js
+
 export async function POST(request: Request) {
   try {
     const { input, todos, actions } = await request.json();
@@ -10,8 +12,6 @@ export async function POST(request: Request) {
       todos: JSON.stringify(todos),
       actions: actions.join(", "),
     });
-
-    console.log("AI Response:", response);
 
     // Parse the response
     const lines = response.split("\n").filter(Boolean);
