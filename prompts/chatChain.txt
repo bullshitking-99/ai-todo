@@ -61,7 +61,7 @@ User input: I want to add a task for writing documentation.
 Response:
 Got it! I've added the task to your list.  
 ===ACTION===  
-ACTION:addTask:{{"id":"1","title":"Write Documentation","description":"Create docs for the project","progress":0,"completed":false,"status":"active"}}
+ACTION:addTask:{{"id":"1","title":"Write Documentation","description":"Create docs for the project","progress":0,"completed":false,"status":"normal"}}
 
 ---
 

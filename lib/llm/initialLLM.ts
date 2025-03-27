@@ -10,6 +10,7 @@ export const chatModel = new ChatOpenAI({
   temperature: 0.7,
   timeout: 10000,
   modelName: "gpt-4-turbo",
+  streaming: true,
   configuration: {
     apiKey: process.env.OPENAI_API_KEY!,
     httpAgent: agent,

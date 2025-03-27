@@ -56,6 +56,8 @@ export default function ChatPanel() {
         content: "",
         sender: "ai",
         isStreaming: true,
+        fullContent: "",
+        streamedChars: 0,
       },
     ]);
 
@@ -67,20 +69,35 @@ export default function ChatPanel() {
         completeTask: completeTask.toString(),
         updateTaskStatus: updateTaskStatus.toString(),
       };
+
       const response = await getAIResponse(
         userMessage,
         tasks,
         availableActions,
-        messages
+        messages,
+        (chunk) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === responseId
+                ? {
+                    ...msg,
+                    fullContent: (msg.fullContent || "") + chunk,
+                    content: (msg.fullContent || "") + chunk,
+                    streamedChars: (msg.streamedChars || 0) + chunk.length,
+                    isStreaming: true,
+                  }
+                : msg
+            )
+          );
+        }
       );
 
-      // Update AI message with response
+      // Update streaming state
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === responseId
             ? {
                 ...msg,
-                content: response.message,
                 isStreaming: false,
               }
             : msg
