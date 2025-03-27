@@ -7,10 +7,10 @@ import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Task, useTaskStore } from "@/lib/store";
+import { useTaskStore } from "@/lib/store";
 import { getAIResponse } from "@/lib/llm/api";
 
-interface Message {
+export interface Message {
   id: string;
   content: string;
   sender: "user" | "ai";
@@ -22,7 +22,7 @@ interface Message {
 export default function ChatPanel() {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: "1",
+      id: Date.now().toString(),
       content: "Hello! How can I help you with your tasks today?",
       sender: "ai",
     },
@@ -70,7 +70,8 @@ export default function ChatPanel() {
       const response = await getAIResponse(
         userMessage,
         tasks,
-        availableActions
+        availableActions,
+        messages
       );
 
       // Update AI message with response

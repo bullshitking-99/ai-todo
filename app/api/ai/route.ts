@@ -5,12 +5,13 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { input, todos, actions } = await request.json();
+    const { input, todos, actions, history } = await request.json();
 
     const response = await chain.invoke({
       input,
       todos: JSON.stringify(todos),
       actions: JSON.stringify(actions),
+      history: JSON.stringify(history),
     });
 
     const [messagePart, actionBlock] = response.split("===ACTION===");

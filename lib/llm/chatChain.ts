@@ -9,7 +9,7 @@ const template = loadPrompt("chatChain.txt");
 
 const prompt = new PromptTemplate({
   template,
-  inputVariables: ["todos", "actions", "input"],
+  inputVariables: ["todos", "actions", "input", "history"],
 });
 
 const chain = RunnableSequence.from([

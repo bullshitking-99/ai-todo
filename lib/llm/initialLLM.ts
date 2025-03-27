@@ -9,6 +9,7 @@ const agent = proxy ? new HttpsProxyAgent(proxy) : undefined;
 export const chatModel = new ChatOpenAI({
   temperature: 0.7,
   timeout: 10000,
+  modelName: "gpt-4-turbo",
   configuration: {
     apiKey: process.env.OPENAI_API_KEY!,
     httpAgent: agent,

@@ -1,3 +1,4 @@
+import { Message } from "@/components/chat-panel";
 import { Task } from "@/lib/store";
 
 interface AIResponse {
@@ -11,7 +12,8 @@ interface AIResponse {
 export async function getAIResponse(
   input: string,
   todos: Task[],
-  actions: Record<string, string>
+  actions: Record<string, string>,
+  history: Message[]
 ): Promise<AIResponse> {
   try {
     const response = await fetch("/api/ai", {
@@ -23,6 +25,7 @@ export async function getAIResponse(
         input,
         todos,
         actions: Object.entries(actions),
+        history,
       }),
     });
 
