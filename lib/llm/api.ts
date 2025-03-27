@@ -22,7 +22,7 @@ export async function getAIResponse(
       body: JSON.stringify({
         input,
         todos,
-        actions: Object.values(actions),
+        actions: Object.entries(actions),
       }),
     });
 
