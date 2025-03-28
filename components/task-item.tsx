@@ -22,7 +22,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTaskStore } from "@/lib/store";
 
-// Task type definition
 type TaskStatus = "normal" | "active" | "passive";
 
 interface Task {
@@ -52,7 +51,6 @@ export default function TaskItem({ task }: TaskItemProps) {
       title: editedTitle,
       description: editedDescription,
       progress: editedProgress,
-      // Status remains unchanged during edits
       status: task.status,
     });
     setIsEditing(false);
@@ -65,30 +63,31 @@ export default function TaskItem({ task }: TaskItemProps) {
     setIsEditing(false);
   };
 
-  // Determine card styling based on status
-  const getCardClasses = () => {
-    const baseClasses = isRemoving ? "task-removing" : "task-visible";
-    switch (task.status) {
-      case "active":
-        return `${baseClasses} border-primary border-2 shadow-md`;
-      case "passive":
-        return `${baseClasses} opacity-60`;
-      default:
-        return baseClasses;
-    }
-  };
-
   const handleDelete = (id: string) => {
     setIsRemoving(true);
     setTimeout(() => {
       deleteTask(id);
-    }, 500);
+    }, 500); // Match animation duration
+  };
+
+  const getCardClasses = () => {
+    const baseClasses = isRemoving
+      ? "task-removing"
+      : "task-visible transition-all duration-500";
+
+    const statusStyle =
+      task.status === "active"
+        ? "border-primary border-2 shadow-md"
+        : task.status === "passive"
+        ? "opacity-60"
+        : "";
+
+    return `${baseClasses} ${statusStyle}`;
   };
 
   return (
-    <Card className={`p-4 transition-all hover:shadow-md ${getCardClasses()}`}>
+    <Card className={`p-4 hover:shadow-md ${getCardClasses()}`}>
       {isEditing ? (
-        // Edit mode
         <div className="space-y-3">
           <Input
             value={editedTitle}
@@ -123,7 +122,6 @@ export default function TaskItem({ task }: TaskItemProps) {
           </div>
         </div>
       ) : (
-        // View mode
         <>
           <div className="flex justify-between items-start mb-2">
             <div>

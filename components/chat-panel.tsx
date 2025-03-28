@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,9 +34,7 @@ export default function ChatPanel() {
   const { tasks, addTask, deleteTask, completeTask, updateTaskStatus } =
     useTaskStore();
 
-  // Handle AI response and task operations
   const handleAIResponse = async (userMessage: string) => {
-    // Add user message
     const newUserMessage: Message = {
       id: Date.now().toString(),
       content: userMessage,
@@ -47,7 +44,6 @@ export default function ChatPanel() {
     setMessages((prev) => [...prev, newUserMessage]);
     setInputValue("");
 
-    // Add initial AI message with loading state
     const responseId = (Date.now() + 1).toString();
     setMessages((prev) => [
       ...prev,
@@ -62,7 +58,6 @@ export default function ChatPanel() {
     ]);
 
     try {
-      // Get AI response
       const availableActions = {
         addTask: addTask.toString(),
         deleteTask: deleteTask.toString(),
@@ -70,11 +65,12 @@ export default function ChatPanel() {
         updateTaskStatus: updateTaskStatus.toString(),
       };
 
-      const response = await getAIResponse(
+      await getAIResponse(
         userMessage,
         tasks,
         availableActions,
         messages,
+        // Stream message
         (chunk) => {
           setMessages((prev) =>
             prev.map((msg) =>
@@ -89,41 +85,34 @@ export default function ChatPanel() {
                 : msg
             )
           );
+        },
+        // Handle action
+        (action) => {
+          const { name, params } = action;
+          switch (name) {
+            case "addTask":
+              addTask(params);
+              break;
+            case "deleteTask":
+              deleteTask(params.id);
+              break;
+            case "completeTask":
+              completeTask(params.id);
+              break;
+            case "updateTaskStatus":
+              updateTaskStatus(params.id, params.status);
+              break;
+          }
         }
       );
 
-      // Update streaming state
+      // Finalize message
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === responseId
-            ? {
-                ...msg,
-                isStreaming: false,
-              }
-            : msg
+          msg.id === responseId ? { ...msg, isStreaming: false } : msg
         )
       );
-
-      // Execute action if provided
-      if (response.action) {
-        const { name, params } = response.action;
-        switch (name) {
-          case "addTask":
-            addTask(params);
-            break;
-          case "deleteTask":
-            deleteTask(params.id);
-            break;
-          case "completeTask":
-            completeTask(params.id);
-            break;
-          case "updateTaskStatus":
-            updateTaskStatus(params.id, params.status);
-            break;
-        }
-      }
     } catch (error) {
-      // Update AI message with error
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === responseId
@@ -151,12 +140,10 @@ export default function ChatPanel() {
     }
   };
 
-  // Auto scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Clean up interval on unmount
   useEffect(() => {
     return () => {
       if (streamingIntervalRef.current) {
@@ -166,42 +153,43 @@ export default function ChatPanel() {
   }, []);
 
   return (
-    <div className="w-1/2 flex flex-col h-full bg-background">
+    <div className="h-full flex flex-col bg-background">
       <div className="p-6 border-b border-border">
         <h1 className="text-2xl font-semibold text-foreground">Assistant</h1>
         <p className="text-muted-foreground">Chat with your AI assistant</p>
       </div>
 
-      <ScrollArea className="flex-1 p-6">
-        <div className="space-y-6">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`${
-                message.sender === "user" ? "flex justify-end" : "block"
-              } animate-message-fade-in`}
-            >
-              {message.sender === "user" ? (
-                // User message (bubble on right)
-                <div className="max-w-[80%] rounded-lg p-4 shadow-sm message-gradient text-primary-foreground">
-                  <p>{message.content}</p>
-                </div>
-              ) : (
-                // AI message (full width)
-                <div className="text-foreground pr-4">
-                  <p className="leading-relaxed">
-                    {message.content}
-                    {message.isStreaming && (
-                      <span className="ml-1 inline-block w-1.5 h-4 bg-foreground/70 animate-pulse" />
-                    )}
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-      </ScrollArea>
+      {/* 修复滚动问题：外层容器必须 overflow-hidden */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full px-6 py-4 overflow-y-auto">
+          <div className="space-y-6">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`${
+                  message.sender === "user" ? "flex justify-end" : "block"
+                } animate-message-fade-in`}
+              >
+                {message.sender === "user" ? (
+                  <div className="max-w-[80%] rounded-lg p-4 shadow-sm message-gradient text-primary-foreground">
+                    <p>{message.content}</p>
+                  </div>
+                ) : (
+                  <div className="text-foreground pr-4">
+                    <p className="leading-relaxed">
+                      {message.content}
+                      {message.isStreaming && (
+                        <span className="ml-1 inline-block w-1.5 h-4 bg-foreground/70 animate-pulse" />
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      </div>
 
       <div className="p-4 border-t border-border">
         <div className="flex gap-2">

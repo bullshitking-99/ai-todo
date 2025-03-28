@@ -4,6 +4,7 @@ import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import TaskItem from "./task-item";
 import { Task, useTaskStore } from "@/lib/store";
 import { useState } from "react";
@@ -29,7 +30,7 @@ export default function TodoPanel() {
   };
 
   return (
-    <div className="w-1/2 border-r border-border p-6 overflow-y-auto bg-background">
+    <div className="w-full h-full border-r border-border p-6 overflow-hidden bg-background">
       <div className="flex flex-col h-full">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">Tasks</h1>
@@ -50,13 +51,15 @@ export default function TodoPanel() {
 
         <Separator className="mb-6" />
 
-        <div className="space-y-4 flex-1 overflow-y-auto">
-          {tasks.map((task) => (
-            <div key={task.id}>
-              <TaskItem task={task} />
-            </div>
-          ))}
-        </div>
+        <ScrollArea className="flex-1 h-0">
+          <div className="space-y-4 pr-3">
+            {tasks.map((task) => (
+              <div key={task.id}>
+                <TaskItem task={task} />
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );

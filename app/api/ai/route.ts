@@ -1,8 +1,6 @@
 import { chain } from "@/lib/llm/chatChain";
 import { NextResponse } from "next/server";
 
-// export const runtime = "nodejs";
-
 export async function POST(request: Request) {
   try {
     const { input, todos, actions, history } = await request.json();
@@ -11,8 +9,8 @@ export async function POST(request: Request) {
     const stream = new TransformStream();
     const writer = stream.writable.getWriter();
 
-    let fullMessage = "";
-    let actionData = null;
+    let buffer = "";
+    let actionSent = false;
 
     chain
       .stream({
@@ -21,46 +19,60 @@ export async function POST(request: Request) {
         actions: JSON.stringify(actions),
         history: JSON.stringify(history),
       })
-      .then(async (stream) => {
+      .then(async (llmStream) => {
         try {
-          for await (const chunk of stream) {
-            fullMessage += chunk;
-            await writer.write(
-              encoder.encode(`data: ${JSON.stringify({
-                type: "message",
-                content: chunk,
-              })}
+          for await (const chunk of llmStream) {
+            buffer += chunk;
 
-`)
-            );
-          }
+            // 分隔符出现，表示 action + message 分界点
+            const separatorIndex = buffer.indexOf("$");
 
-          const [messagePart, actionBlock] = fullMessage.split("===ACTION===");
+            if (separatorIndex !== -1 && !actionSent) {
+              const beforeDollar = buffer.slice(0, separatorIndex).trim();
+              const afterDollar = buffer.slice(separatorIndex + 1); // message 后续
 
-          if (actionBlock?.includes("ACTION:")) {
-            const [, actionStr] = actionBlock.trim().split("ACTION:");
-            const [rawName, ...paramParts] = actionStr.split(":");
-            const actionName = rawName.trim();
-            const rawParams = paramParts.join(":").trim();
+              // 提取并发送 action
+              if (beforeDollar.startsWith("ACTION:")) {
+                const [, actionStr] = beforeDollar.split("ACTION:");
+                const [name, ...paramParts] = actionStr.split(":");
+                const actionName = name.trim();
+                const rawParams = paramParts.join(":").trim();
 
-            try {
-              actionData = {
-                name: actionName,
-                params: rawParams ? JSON.parse(rawParams) : {},
-              };
-            } catch (err) {
-              console.warn("⚠️ 参数解析失败:", rawParams);
-              actionData = { name: actionName, params: { raw: rawParams } };
+                try {
+                  const actionData = {
+                    name: actionName,
+                    params: rawParams ? JSON.parse(rawParams) : {},
+                  };
+
+                  await writer.write(
+                    encoder.encode(
+                      `data: ${JSON.stringify({
+                        type: "action",
+                        content: actionData,
+                      })}\n\n`
+                    )
+                  );
+                } catch (e) {
+                  console.warn("⚠️ Failed to parse action JSON:", rawParams);
+                }
+              }
+
+              actionSent = true;
+              buffer = afterDollar; // 清除 action 部分，只保留 message 开始部分
             }
 
-            await writer.write(
-              encoder.encode(`data: ${JSON.stringify({
-                type: "action",
-                content: actionData,
-              })}
-
-`)
-            );
+            // 继续流式发送 message 内容
+            if (actionSent && buffer) {
+              await writer.write(
+                encoder.encode(
+                  `data: ${JSON.stringify({
+                    type: "message",
+                    content: buffer,
+                  })}\n\n`
+                )
+              );
+              buffer = ""; // 清空已发送内容
+            }
           }
 
           await writer.close();
