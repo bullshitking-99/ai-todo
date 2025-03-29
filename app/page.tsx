@@ -1,4 +1,4 @@
-import TodoPanel from "@/components/todo-panel";
+import TodoPanel from "@/components/task-panel";
 import ChatPanel from "@/components/chat-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 

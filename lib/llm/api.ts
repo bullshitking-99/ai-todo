@@ -8,7 +8,7 @@ interface AIResponse {
 
 export async function getAIResponse(
   input: string,
-  todos: Task[],
+  tasks: Task[],
   history: Message[],
   onStream?: (chunk: string) => void,
   onAction?: (action: { type: StoreFunctionKeys; params: any }) => void
@@ -19,7 +19,7 @@ export async function getAIResponse(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         input,
-        todos,
+        tasks,
         history,
       }),
     });

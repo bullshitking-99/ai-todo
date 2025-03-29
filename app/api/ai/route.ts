@@ -4,7 +4,7 @@ import { loadFile } from "@/lib/server/loadFile";
 
 export async function POST(request: Request) {
   try {
-    const { input, todos, history } = await request.json();
+    const { input, tasks, history } = await request.json();
 
     const storeCode = loadFile("lib/store.ts");
 
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     chain
       .stream({
         input,
-        todos: JSON.stringify(todos),
+        tasks: JSON.stringify(tasks),
         history: JSON.stringify(history),
         storeCode, // 传入 store 代码
       })
