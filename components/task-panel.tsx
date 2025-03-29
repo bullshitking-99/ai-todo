@@ -8,10 +8,23 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import TaskItem from "./task-item";
 import { Task, useTaskStore } from "@/lib/store";
 import { useState } from "react";
+import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
 
-export default function TodoPanel() {
-  const { tasks, addTask: addTaskToStore } = useTaskStore();
+export default function TaskPanel() {
+  const { tasks } = useTaskStore();
   const [newTaskTitle, setNewTaskTitle] = useState("");
+
+  const handleTaskChange = (action: {
+    type: StoreFunctionKeys;
+    params: any;
+  }) => {
+    dispatchAction({
+      ...action,
+      callback: () => {
+        // 这里可以添加AI反馈的回调逻辑
+      },
+    });
+  };
 
   const addTask = () => {
     if (newTaskTitle.trim() === "") return;
@@ -24,7 +37,10 @@ export default function TodoPanel() {
       status: "normal",
     };
 
-    addTaskToStore(newTask);
+    handleTaskChange({
+      type: "addTask",
+      params: newTask,
+    });
     setNewTaskTitle("");
   };
 
@@ -54,7 +70,7 @@ export default function TodoPanel() {
           <div className="space-y-4 pr-3">
             {tasks.map((task) => (
               <div key={task.id}>
-                <TaskItem task={task} />
+                <TaskItem task={task} onTaskChange={handleTaskChange} />
               </div>
             ))}
           </div>

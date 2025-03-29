@@ -1,4 +1,4 @@
-import TodoPanel from "@/components/task-panel";
+import TaskPanel from "@/components/task-panel";
 import ChatPanel from "@/components/chat-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -7,7 +7,7 @@ export default function Home() {
     <main className="flex h-screen w-screen overflow-hidden">
       {/* 固定宽度或占一部分比例 */}
       <div className="w-1/2 border-r border-border">
-        <TodoPanel />
+        <TaskPanel />
       </div>
 
       {/* 剩余空间全给 ChatPanel */}

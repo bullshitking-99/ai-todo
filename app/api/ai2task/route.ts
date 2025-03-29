@@ -1,4 +1,4 @@
-import { chain } from "@/lib/llm/chatChain";
+import { chatChain } from "@/lib/llm/chains";
 import { NextResponse } from "next/server";
 import { loadFile } from "@/lib/server/loadFile";
 
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     let buffer = "";
     let actionSent = false;
 
-    chain
+    chatChain
       .stream({
         input,
         tasks: JSON.stringify(tasks),

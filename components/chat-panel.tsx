@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTaskStore } from "@/lib/store";
-import { getAIResponse } from "@/lib/llm/api";
+import { getAIResponse } from "@/lib/llm/apis";
 import { dispatchAction } from "@/lib/dispatcher";
 
 export interface Message {

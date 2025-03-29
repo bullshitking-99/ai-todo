@@ -20,15 +20,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Task, useTaskStore } from "@/lib/store";
+import { Task } from "@/lib/store";
 import { Slider } from "./ui/slider";
+import { StoreFunctionKeys } from "@/lib/dispatcher";
 
 interface TaskItemProps {
   task: Task;
+  onTaskChange: (action: { type: StoreFunctionKeys; params: any }) => void;
 }
 
-export default function TaskItem({ task }: TaskItemProps) {
-  const { deleteTask, updateTask } = useTaskStore();
+export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [editedTask, setEditedTask] = useState({
@@ -48,11 +49,14 @@ export default function TaskItem({ task }: TaskItemProps) {
   const taskCompleted = task.progress === 100;
 
   const handleSave = () => {
-    updateTask({
-      ...task,
-      title: editedTask.title,
-      description: editedTask.description,
-      progress: editedTask.progress,
+    onTaskChange({
+      type: "updateTask",
+      params: {
+        ...task,
+        title: editedTask.title,
+        description: editedTask.description,
+        progress: editedTask.progress,
+      },
     });
     setIsEditing(false);
   };
@@ -69,7 +73,10 @@ export default function TaskItem({ task }: TaskItemProps) {
   const handleDelete = (id: string) => {
     setIsRemoving(true);
     setTimeout(() => {
-      deleteTask(id);
+      onTaskChange({
+        type: "deleteTask",
+        params: id,
+      });
     }, 500); // Match animation duration
   };
 
@@ -149,7 +156,12 @@ export default function TaskItem({ task }: TaskItemProps) {
                   <Pencil className="h-4 w-4 mr-2" /> Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => updateTask({ ...task, progress: 100 })}
+                  onClick={() =>
+                    onTaskChange({
+                      type: "updateTask",
+                      params: { ...task, progress: 100 },
+                    })
+                  }
                   disabled={taskCompleted}
                   className="text-success"
                 >

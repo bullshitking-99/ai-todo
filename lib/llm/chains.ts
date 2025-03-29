@@ -5,17 +5,15 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 import { chatModel } from "@/lib/llm/initialLLM"; // ✅ 引用共享实例
 import { loadFile } from "../server/loadFile";
 
-const template = loadFile("prompts/chatChain.txt");
-
-const prompt = new PromptTemplate({
-  template,
+const ChatChainPrompt = new PromptTemplate({
+  template: loadFile("prompts/chatChain.txt"),
   inputVariables: ["tasks", "storeCode", "input", "history"],
 });
 
-const chain = RunnableSequence.from([
-  prompt,
+const chatChain = RunnableSequence.from([
+  ChatChainPrompt,
   chatModel,
   new StringOutputParser(),
 ]);
 
-export { chain };
+export { chatChain };

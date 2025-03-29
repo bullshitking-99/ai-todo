@@ -14,7 +14,7 @@ export async function getAIResponse(
   onAction?: (action: { type: StoreFunctionKeys; params: any }) => void
 ): Promise<AIResponse> {
   try {
-    const response = await fetch("/api/ai", {
+    const response = await fetch("/api/ai2task", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
