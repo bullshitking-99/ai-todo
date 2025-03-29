@@ -31,8 +31,7 @@ export default function ChatPanel() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { tasks, addTask, deleteTask, completeTask, updateTaskStatus } =
-    useTaskStore();
+  const { tasks, addTask, deleteTask, setTasks } = useTaskStore();
 
   const handleAIResponse = async (userMessage: string) => {
     const newUserMessage: Message = {
@@ -61,8 +60,7 @@ export default function ChatPanel() {
       const availableActions = {
         addTask: addTask.toString(),
         deleteTask: deleteTask.toString(),
-        completeTask: completeTask.toString(),
-        updateTaskStatus: updateTaskStatus.toString(),
+        setTasks: setTasks.toString(),
       };
 
       await getAIResponse(
@@ -96,11 +94,8 @@ export default function ChatPanel() {
             case "deleteTask":
               deleteTask(params.id);
               break;
-            case "completeTask":
-              completeTask(params.id);
-              break;
-            case "updateTaskStatus":
-              updateTaskStatus(params.id, params.status);
+            case "setTasks":
+              setTasks(params.tasks);
               break;
           }
         }

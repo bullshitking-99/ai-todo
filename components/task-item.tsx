@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pencil,
   Trash2,
@@ -20,46 +20,49 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useTaskStore } from "@/lib/store";
-
-type TaskStatus = "normal" | "active" | "passive";
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  progress: number;
-  completed: boolean;
-  status: TaskStatus;
-}
+import { Task, useTaskStore } from "@/lib/store";
+import { Slider } from "./ui/slider";
 
 interface TaskItemProps {
   task: Task;
 }
 
 export default function TaskItem({ task }: TaskItemProps) {
-  const { deleteTask, completeTask, updateTask } = useTaskStore();
+  const { deleteTask, updateTask } = useTaskStore();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(task.title);
-  const [editedDescription, setEditedDescription] = useState(task.description);
-  const [editedProgress, setEditedProgress] = useState(task.progress);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [editedTask, setEditedTask] = useState({
+    title: task.title,
+    description: task.description,
+    progress: task.progress,
+  });
+
+  useEffect(() => {
+    setEditedTask({
+      title: task.title,
+      description: task.description,
+      progress: task.progress,
+    });
+  }, [task]);
+
+  const taskCompleted = task.progress === 100;
 
   const handleSave = () => {
     updateTask({
       ...task,
-      title: editedTitle,
-      description: editedDescription,
-      progress: editedProgress,
-      status: task.status,
+      title: editedTask.title,
+      description: editedTask.description,
+      progress: editedTask.progress,
     });
     setIsEditing(false);
   };
 
   const handleCancel = () => {
-    setEditedTitle(task.title);
-    setEditedDescription(task.description);
-    setEditedProgress(task.progress);
+    setEditedTask({
+      title: task.title,
+      description: task.description,
+      progress: task.progress,
+    });
     setIsEditing(false);
   };
 
@@ -90,27 +93,31 @@ export default function TaskItem({ task }: TaskItemProps) {
       {isEditing ? (
         <div className="space-y-3">
           <Input
-            value={editedTitle}
-            onChange={(e) => setEditedTitle(e.target.value)}
+            value={editedTask.title}
+            onChange={(e) =>
+              setEditedTask({ ...editedTask, title: e.target.value })
+            }
             className="font-medium"
           />
           <Textarea
-            value={editedDescription}
-            onChange={(e) => setEditedDescription(e.target.value)}
+            value={editedTask.description}
+            onChange={(e) =>
+              setEditedTask({ ...editedTask, description: e.target.value })
+            }
             className="text-sm resize-none h-20"
           />
           <div className="flex items-center gap-2">
-            <span className="text-xs">Progress: {editedProgress}%</span>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={editedProgress}
-              onChange={(e) =>
-                setEditedProgress(Number.parseInt(e.target.value))
+            <span className="text-xs shrink-0">Progress:</span>
+            <Slider
+              value={[editedTask.progress]}
+              onValueChange={([number]) =>
+                setEditedTask({ ...editedTask, progress: number })
               }
-              className="flex-1"
+              min={0}
+              max={100}
+              step={1}
             />
+            <span className="text-xs shrink-0">{editedTask.progress}%</span>
           </div>
           <div className="flex justify-end gap-2 mt-2">
             <Button variant="outline" size="sm" onClick={handleCancel}>
@@ -142,8 +149,8 @@ export default function TaskItem({ task }: TaskItemProps) {
                   <Pencil className="h-4 w-4 mr-2" /> Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => completeTask(task.id)}
-                  disabled={task.completed}
+                  onClick={() => updateTask({ ...task, progress: 100 })}
+                  disabled={taskCompleted}
                   className="text-success"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" /> Complete
@@ -165,12 +172,12 @@ export default function TaskItem({ task }: TaskItemProps) {
             </div>
             <Progress
               value={task.progress}
-              className={`h-2 ${task.completed ? "[&>div]:bg-success" : ""}`}
+              className={`h-2 ${taskCompleted ? "[&>div]:bg-success" : ""}`}
             />
           </div>
 
-          {task.completed && (
-            <div className="flex items-center mt-2 text-xs text-success">
+          {task.progress === 100 && (
+            <div className="flex items-center  text-xs text-success">
               <CheckCircle className="h-3 w-3 mr-1" />
               <span>Completed</span>
             </div>

@@ -21,7 +21,6 @@ export default function TodoPanel() {
       title: newTaskTitle,
       description: "New task description",
       progress: 0,
-      completed: false,
       status: "normal",
     };
 
