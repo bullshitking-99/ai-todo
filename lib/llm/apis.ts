@@ -60,3 +60,55 @@ export async function getAIResponse(
     throw error;
   }
 }
+
+export async function getTaskAIResponse(
+  action: { type: string; params: any },
+  tasks: Task[],
+  history: Message[],
+  onStream?: (chunk: string) => void
+): Promise<string> {
+  try {
+    const response = await fetch("/api/task2ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action,
+        tasks,
+        history,
+      }),
+    });
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("Response body is not readable");
+
+    const decoder = new TextDecoder();
+    let fullMessage = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const text = decoder.decode(value);
+      const lines = text.split("\n");
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.message) {
+              onStream?.(data.message);
+              fullMessage += data.message;
+            }
+          } catch (e) {
+            console.warn("Failed to parse SSE:", e);
+          }
+        }
+      }
+    }
+
+    return fullMessage;
+  } catch (error) {
+    console.error("Error getting task AI response:", error);
+    throw error;
+  }
+}

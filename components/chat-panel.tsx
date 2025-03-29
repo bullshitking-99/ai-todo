@@ -1,14 +1,20 @@
 "use client";
 
 import type React from "react";
-import { useState, useRef, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTaskStore } from "@/lib/store";
-import { getAIResponse } from "@/lib/llm/apis";
-import { dispatchAction } from "@/lib/dispatcher";
+import { getAIResponse, getTaskAIResponse } from "@/lib/llm/apis";
+import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
 
 export interface Message {
   id: string;
@@ -19,7 +25,7 @@ export interface Message {
   streamedChars?: number;
 }
 
-export default function ChatPanel() {
+export default forwardRef(function ChatPanel(props, ref) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: Date.now().toString(),
@@ -106,6 +112,65 @@ export default function ChatPanel() {
     }
   };
 
+  const handleManualTaskAction = async ({
+    type,
+    params,
+  }: {
+    type: StoreFunctionKeys;
+    params: any;
+  }) => {
+    const responseId = Date.now().toString();
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: responseId,
+        content: "",
+        sender: "ai",
+        isStreaming: true,
+        fullContent: "",
+        streamedChars: 0,
+      },
+    ]);
+
+    try {
+      await getTaskAIResponse({ type, params }, tasks, messages, (chunk) => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === responseId
+              ? {
+                  ...msg,
+                  fullContent: (msg.fullContent || "") + chunk,
+                  content: (msg.fullContent || "") + chunk,
+                  streamedChars: (msg.streamedChars || 0) + chunk.length,
+                  isStreaming: true,
+                }
+              : msg
+          )
+        );
+      });
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === responseId ? { ...msg, isStreaming: false } : msg
+        )
+      );
+    } catch (error) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === responseId
+            ? {
+                ...msg,
+                content: "Sorry, I encountered an error. Please try again.",
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+      console.error("Task AI Response Error:", error);
+    }
+  };
+
   const handleSendMessage = () => {
     if (inputValue.trim() === "") return;
     handleAIResponse(inputValue);
@@ -129,6 +194,10 @@ export default function ChatPanel() {
       }
     };
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    handleManualTaskAction,
+  }));
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -190,4 +259,4 @@ export default function ChatPanel() {
       </div>
     </div>
   );
-}
+});

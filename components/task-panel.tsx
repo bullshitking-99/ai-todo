@@ -10,7 +10,16 @@ import { Task, useTaskStore } from "@/lib/store";
 import { useState } from "react";
 import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
 
-export default function TaskPanel() {
+interface TaskPanelProps {
+  chatPanelRef: React.RefObject<{
+    handleManualTaskAction: (action: {
+      type: StoreFunctionKeys;
+      params: any;
+    }) => void;
+  } | null>;
+}
+
+export default function TaskPanel({ chatPanelRef }: TaskPanelProps) {
   const { tasks } = useTaskStore();
   const [newTaskTitle, setNewTaskTitle] = useState("");
 
@@ -21,7 +30,9 @@ export default function TaskPanel() {
     dispatchAction({
       ...action,
       callback: () => {
-        // 这里可以添加AI反馈的回调逻辑
+        if (chatPanelRef?.current) {
+          chatPanelRef.current.handleManualTaskAction(action);
+        }
       },
     });
   };
@@ -57,6 +68,11 @@ export default function TaskPanel() {
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
             className="flex-1"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                addTask();
+              }
+            }}
           />
           <Button onClick={addTask} className="bg-primary hover:bg-primary/90">
             <PlusCircle className="h-4 w-4 mr-2" />

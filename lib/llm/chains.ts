@@ -16,4 +16,15 @@ const chatChain = RunnableSequence.from([
   new StringOutputParser(),
 ]);
 
-export { chatChain };
+const TaskChainPrompt = new PromptTemplate({
+  template: loadFile("prompts/taskChain.txt"),
+  inputVariables: ["action", "tasks", "history", "storeCode"],
+});
+
+const taskChain = RunnableSequence.from([
+  TaskChainPrompt,
+  chatModel,
+  new StringOutputParser(),
+]);
+
+export { chatChain, taskChain };
