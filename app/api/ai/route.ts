@@ -1,9 +1,12 @@
 import { chain } from "@/lib/llm/chatChain";
 import { NextResponse } from "next/server";
+import { loadFile } from "@/lib/server/loadFile";
 
 export async function POST(request: Request) {
   try {
-    const { input, todos, actions, history } = await request.json();
+    const { input, todos, history } = await request.json();
+
+    const storeCode = loadFile("lib/store.ts");
 
     const encoder = new TextEncoder();
     const stream = new TransformStream();
@@ -16,22 +19,20 @@ export async function POST(request: Request) {
       .stream({
         input,
         todos: JSON.stringify(todos),
-        actions: JSON.stringify(actions),
         history: JSON.stringify(history),
+        storeCode, // 传入 store 代码
       })
       .then(async (llmStream) => {
         try {
           for await (const chunk of llmStream) {
             buffer += chunk;
 
-            // 分隔符出现，表示 action + message 分界点
             const separatorIndex = buffer.indexOf("$");
 
             if (separatorIndex !== -1 && !actionSent) {
               const beforeDollar = buffer.slice(0, separatorIndex).trim();
-              const afterDollar = buffer.slice(separatorIndex + 1); // message 后续
+              const afterDollar = buffer.slice(separatorIndex + 1);
 
-              // 提取并发送 action
               if (beforeDollar.startsWith("ACTION:")) {
                 const [, actionStr] = beforeDollar.split("ACTION:");
                 const [name, ...paramParts] = actionStr.split(":");
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
 
                 try {
                   const actionData = {
-                    name: actionName,
+                    type: actionName,
                     params: rawParams ? JSON.parse(rawParams) : {},
                   };
 
@@ -58,10 +59,9 @@ export async function POST(request: Request) {
               }
 
               actionSent = true;
-              buffer = afterDollar; // 清除 action 部分，只保留 message 开始部分
+              buffer = afterDollar;
             }
 
-            // 继续流式发送 message 内容
             if (actionSent && buffer) {
               await writer.write(
                 encoder.encode(
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
                   })}\n\n`
                 )
               );
-              buffer = ""; // 清空已发送内容
+              buffer = "";
             }
           }
 

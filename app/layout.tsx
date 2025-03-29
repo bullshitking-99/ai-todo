@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Modern Two-Panel App",
+  title: "still todo",
   description: "A modern web app with Todo list and Chat interface",
 };
 

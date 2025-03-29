@@ -10,7 +10,7 @@ export interface Task {
   status: TaskStatus;
 }
 
-interface TaskStore {
+export interface TaskStore {
   tasks: Task[];
   addTask: (task: Task) => void;
   deleteTask: (id: string) => void;

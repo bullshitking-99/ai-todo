@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTaskStore } from "@/lib/store";
 import { getAIResponse } from "@/lib/llm/api";
+import { dispatchAction } from "@/lib/dispatcher";
 
 export interface Message {
   id: string;
@@ -31,7 +32,7 @@ export default function ChatPanel() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { tasks, addTask, deleteTask, setTasks } = useTaskStore();
+  const { tasks } = useTaskStore();
 
   const handleAIResponse = async (userMessage: string) => {
     const newUserMessage: Message = {
@@ -57,16 +58,9 @@ export default function ChatPanel() {
     ]);
 
     try {
-      const availableActions = {
-        addTask: addTask.toString(),
-        deleteTask: deleteTask.toString(),
-        setTasks: setTasks.toString(),
-      };
-
       await getAIResponse(
         userMessage,
         tasks,
-        availableActions,
         messages,
         // Stream message
         (chunk) => {
@@ -86,18 +80,7 @@ export default function ChatPanel() {
         },
         // Handle action
         (action) => {
-          const { name, params } = action;
-          switch (name) {
-            case "addTask":
-              addTask(params);
-              break;
-            case "deleteTask":
-              deleteTask(params.id);
-              break;
-            case "setTasks":
-              setTasks(params.tasks);
-              break;
-          }
+          dispatchAction(action);
         }
       );
 

@@ -1,5 +1,6 @@
 import { Message } from "@/components/chat-panel";
 import { Task } from "@/lib/store";
+import { StoreFunctionKeys } from "../dispatcher";
 
 interface AIResponse {
   message: string;
@@ -8,10 +9,9 @@ interface AIResponse {
 export async function getAIResponse(
   input: string,
   todos: Task[],
-  actions: Record<string, string>,
   history: Message[],
   onStream?: (chunk: string) => void,
-  onAction?: (action: { name: string; params: any }) => void
+  onAction?: (action: { type: StoreFunctionKeys; params: any }) => void
 ): Promise<AIResponse> {
   try {
     const response = await fetch("/api/ai", {
@@ -20,7 +20,6 @@ export async function getAIResponse(
       body: JSON.stringify({
         input,
         todos,
-        actions: Object.entries(actions),
         history,
       }),
     });
