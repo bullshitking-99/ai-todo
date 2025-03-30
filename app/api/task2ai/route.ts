@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import { taskChain } from "@/lib/llm/chains";
 import { getStoreCode } from "@/lib/server/loadStoreCode";
 
-export async function POST(req: Request) {
-  // return new Response("✅ task2ai working!", {
-  //   status: 200,
-  // }); // 有用
+export const runtime = "nodejs";
 
+export async function POST(req: Request) {
   const { action, tasks, history } = await req.json();
 
   try {
