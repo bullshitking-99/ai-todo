@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { taskChain } from "@/lib/llm/chains";
-import storeCode from "@/lib/storeCode";
+import { getStoreCode } from "@/lib/server/loadStoreCode";
 
 export async function POST(req: Request) {
   const { action, tasks, history } = await req.json();
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
       action,
       tasks,
       history,
-      storeCode,
+      storeCode: getStoreCode(),
     });
 
     const responseStream = new ReadableStream({

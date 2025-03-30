@@ -1,6 +1,6 @@
 import { chatChain } from "@/lib/llm/chains";
+import { getStoreCode } from "@/lib/server/loadStoreCode";
 import { NextResponse } from "next/server";
-import storeCode from "@/lib/storeCode";
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         input,
         tasks: JSON.stringify(tasks),
         history: JSON.stringify(history),
-        storeCode, // 传入 store 代码
+        storeCode: getStoreCode(),
       })
       .then(async (llmStream) => {
         try {

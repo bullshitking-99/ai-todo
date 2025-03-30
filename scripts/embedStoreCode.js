@@ -1,9 +1,12 @@
-// scripts/embedStoreCode.js
 const fs = require("fs");
+const path = require("path");
 
-const rawCode = fs.readFileSync("lib/store.ts", "utf-8");
-const moduleCode = `const storeCode = ${JSON.stringify(
-  rawCode
+const source = fs.readFileSync("lib/store.ts", "utf-8");
+const output = `const storeCode = ${JSON.stringify(
+  source
 )};\n\nexport default storeCode;\n`;
 
-fs.writeFileSync("lib/storeCode.ts", moduleCode);
+const outDir = path.resolve("build/gen");
+fs.mkdirSync(outDir, { recursive: true });
+
+fs.writeFileSync(path.join(outDir, "storeCode.ts"), output);
