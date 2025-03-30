@@ -1,12 +1,10 @@
 import { chatChain } from "@/lib/llm/chains";
 import { NextResponse } from "next/server";
-import { loadFile } from "@/lib/server/loadFile";
+import storeCode from "@/lib/storeCode";
 
 export async function POST(request: Request) {
   try {
     const { input, tasks, history } = await request.json();
-
-    const storeCode = loadFile("lib/store.ts");
 
     const encoder = new TextEncoder();
     const stream = new TransformStream();
