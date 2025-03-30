@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { taskChain } from "@/lib/llm/chains";
 import { loadFile } from "@/lib/server/loadFile";
 
-export default async function POST(req: Request) {
+export async function POST(req: Request) {
   const { action, tasks, history } = await req.json();
 
   try {
