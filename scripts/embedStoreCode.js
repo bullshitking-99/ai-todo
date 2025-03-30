@@ -1,7 +1,9 @@
+// scripts/embedStoreCode.js
 const fs = require("fs");
-const path = require("path");
 
-// 构建目录中写入
-const distPath = path.resolve(".next/storeCode.txt");
-const code = fs.readFileSync("lib/store.ts", "utf-8");
-fs.writeFileSync(distPath, code);
+const rawCode = fs.readFileSync("lib/store.ts", "utf-8");
+const moduleCode = `const storeCode = ${JSON.stringify(
+  rawCode
+)};\n\nexport default storeCode;\n`;
+
+fs.writeFileSync("lib/storeCode.ts", moduleCode);

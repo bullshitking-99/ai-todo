@@ -19,6 +19,7 @@
 
 # production
 /build
+lib/storeCode.ts
 
 # misc
 .DS_Store
