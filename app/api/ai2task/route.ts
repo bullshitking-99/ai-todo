@@ -2,7 +2,7 @@ import { chatChain } from "@/lib/llm/chains";
 import { NextResponse } from "next/server";
 import { loadFile } from "@/lib/server/loadFile";
 
-export async function POST(request: Request) {
+export default async function POST(request: Request) {
   try {
     const { input, tasks, history } = await request.json();
 
