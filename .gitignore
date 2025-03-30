@@ -19,7 +19,7 @@
 
 # production
 /build
-build/gen/
+lib/__generated__/
 
 # misc
 .DS_Store
