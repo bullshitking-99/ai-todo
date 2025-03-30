@@ -16,4 +16,14 @@ export function loadFile(relativePath: string): string {
     fileCache[relativePath] = fs.readFileSync(fullPath, "utf-8");
   }
   return fileCache[relativePath];
+
+  // 在 edge runtime下，生产时使用require动态加载
+  // if (process.env.NODE_ENV === "development") {
+
+  // } else {
+  //   return require(`@gen/${path.basename(
+  //     relativePath,
+  //     path.extname(relativePath)
+  //   )}`).default;
+  // }
 }

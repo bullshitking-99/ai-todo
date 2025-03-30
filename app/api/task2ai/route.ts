@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { taskChain } from "@/lib/llm/chains";
-import { getStoreCode } from "@/lib/server/loadStoreCode";
+import { loadFile } from "@/lib/server/loadFile";
 
 export const runtime = "nodejs";
 
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       action,
       tasks,
       history,
-      storeCode: getStoreCode(),
+      storeCode: loadFile("lib/store.ts"),
     });
 
     const responseStream = new ReadableStream({

@@ -1,6 +1,8 @@
 import { chatChain } from "@/lib/llm/chains";
-import { getStoreCode } from "@/lib/server/loadStoreCode";
+import { loadFile } from "@/lib/server/loadFile";
 import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +20,7 @@ export async function POST(request: Request) {
         input,
         tasks: JSON.stringify(tasks),
         history: JSON.stringify(history),
-        storeCode: getStoreCode(),
+        storeCode: loadFile("lib/store.ts"),
       })
       .then(async (llmStream) => {
         try {

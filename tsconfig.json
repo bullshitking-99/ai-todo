@@ -18,8 +18,10 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@gen/*": [".gen/*"]
     }
   },
   "include": [
@@ -28,7 +30,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "next.config.js",
-    "scripts/embedStoreCode.js"
+    "scripts/embedStaticFile.js"
   ],
   "exclude": ["node_modules"]
 }
