@@ -2,7 +2,7 @@ import { chatChain } from "@/lib/llm/chains";
 import { loadFile } from "@/lib/server/loadFile";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
+// export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
