@@ -7,8 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Modern Two-Panel App",
-  description: "A modern web app with Todo list and Chat interface",
+  title: "ChatTask",
+  description: "A modern web app with Task list and Chat interface",
 };
 
 export default function RootLayout({

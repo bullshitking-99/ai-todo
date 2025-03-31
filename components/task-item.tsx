@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pencil,
   Trash2,
@@ -20,98 +20,111 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useTaskStore } from "@/lib/store";
-
-// Task type definition
-type TaskStatus = "normal" | "active" | "passive";
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  progress: number;
-  completed: boolean;
-  status: TaskStatus;
-}
+import { Task } from "@/lib/store";
+import { Slider } from "./ui/slider";
+import { StoreFunctionKeys } from "@/lib/dispatcher";
 
 interface TaskItemProps {
   task: Task;
+  onTaskChange: (action: { type: StoreFunctionKeys; params: any }) => void;
 }
 
-export default function TaskItem({ task }: TaskItemProps) {
-  const { deleteTask, completeTask, updateTask } = useTaskStore();
+export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(task.title);
-  const [editedDescription, setEditedDescription] = useState(task.description);
-  const [editedProgress, setEditedProgress] = useState(task.progress);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [editedTask, setEditedTask] = useState({
+    title: task.title,
+    description: task.description,
+    progress: task.progress,
+  });
+
+  useEffect(() => {
+    setEditedTask({
+      title: task.title,
+      description: task.description,
+      progress: task.progress,
+    });
+  }, [task]);
+
+  const taskCompleted = task.progress === 100;
 
   const handleSave = () => {
-    updateTask({
-      ...task,
-      title: editedTitle,
-      description: editedDescription,
-      progress: editedProgress,
-      // Status remains unchanged during edits
-      status: task.status,
+    onTaskChange({
+      type: "updateTask",
+      params: {
+        ...task,
+        title: editedTask.title,
+        description: editedTask.description,
+        progress: editedTask.progress,
+      },
     });
     setIsEditing(false);
   };
 
   const handleCancel = () => {
-    setEditedTitle(task.title);
-    setEditedDescription(task.description);
-    setEditedProgress(task.progress);
+    setEditedTask({
+      title: task.title,
+      description: task.description,
+      progress: task.progress,
+    });
     setIsEditing(false);
-  };
-
-  // Determine card styling based on status
-  const getCardClasses = () => {
-    const baseClasses = isRemoving ? "task-removing" : "task-visible";
-    switch (task.status) {
-      case "active":
-        return `${baseClasses} border-primary border-2 shadow-md`;
-      case "passive":
-        return `${baseClasses} opacity-60`;
-      default:
-        return baseClasses;
-    }
   };
 
   const handleDelete = (id: string) => {
     setIsRemoving(true);
     setTimeout(() => {
-      deleteTask(id);
-    }, 500);
+      onTaskChange({
+        type: "deleteTask",
+        params: id,
+      });
+    }, 500); // Match animation duration
+  };
+
+  const getCardClasses = () => {
+    const baseClasses = isRemoving
+      ? "task-removing"
+      : "task-visible transition-all duration-500";
+
+    const statusStyle =
+      task.status === "active"
+        ? "border-primary border-2 shadow-md"
+        : task.status === "passive"
+        ? "opacity-60"
+        : "";
+
+    return `${baseClasses} ${statusStyle}`;
   };
 
   return (
-    <Card className={`p-4 transition-all hover:shadow-md ${getCardClasses()}`}>
+    <Card className={`p-4 hover:shadow-md ${getCardClasses()}`}>
       {isEditing ? (
-        // Edit mode
         <div className="space-y-3">
           <Input
-            value={editedTitle}
-            onChange={(e) => setEditedTitle(e.target.value)}
+            value={editedTask.title}
+            onChange={(e) =>
+              setEditedTask({ ...editedTask, title: e.target.value })
+            }
             className="font-medium"
           />
           <Textarea
-            value={editedDescription}
-            onChange={(e) => setEditedDescription(e.target.value)}
+            value={editedTask.description}
+            onChange={(e) =>
+              setEditedTask({ ...editedTask, description: e.target.value })
+            }
             className="text-sm resize-none h-20"
           />
           <div className="flex items-center gap-2">
-            <span className="text-xs">Progress: {editedProgress}%</span>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={editedProgress}
-              onChange={(e) =>
-                setEditedProgress(Number.parseInt(e.target.value))
+            <span className="text-xs shrink-0">Progress:</span>
+            <Slider
+              value={[editedTask.progress]}
+              onValueChange={([number]) =>
+                setEditedTask({ ...editedTask, progress: number })
               }
-              className="flex-1"
+              min={0}
+              max={100}
+              step={1}
             />
+            <span className="text-xs shrink-0">{editedTask.progress}%</span>
           </div>
           <div className="flex justify-end gap-2 mt-2">
             <Button variant="outline" size="sm" onClick={handleCancel}>
@@ -123,7 +136,6 @@ export default function TaskItem({ task }: TaskItemProps) {
           </div>
         </div>
       ) : (
-        // View mode
         <>
           <div className="flex justify-between items-start mb-2">
             <div>
@@ -144,8 +156,13 @@ export default function TaskItem({ task }: TaskItemProps) {
                   <Pencil className="h-4 w-4 mr-2" /> Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => completeTask(task.id)}
-                  disabled={task.completed}
+                  onClick={() =>
+                    onTaskChange({
+                      type: "updateTask",
+                      params: { ...task, progress: 100 },
+                    })
+                  }
+                  disabled={taskCompleted}
                   className="text-success"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" /> Complete
@@ -167,12 +184,12 @@ export default function TaskItem({ task }: TaskItemProps) {
             </div>
             <Progress
               value={task.progress}
-              className={`h-2 ${task.completed ? "[&>div]:bg-success" : ""}`}
+              className={`h-2 ${taskCompleted ? "[&>div]:bg-success" : ""}`}
             />
           </div>
 
-          {task.completed && (
-            <div className="flex items-center mt-2 text-xs text-success">
+          {task.progress === 100 && (
+            <div className="flex items-center  text-xs text-success">
               <CheckCircle className="h-3 w-3 mr-1" />
               <span>Completed</span>
             </div>

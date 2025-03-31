@@ -4,13 +4,38 @@ import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import TaskItem from "./task-item";
 import { Task, useTaskStore } from "@/lib/store";
 import { useState } from "react";
+import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
 
-export default function TodoPanel() {
-  const { tasks, addTask: addTaskToStore } = useTaskStore();
+interface TaskPanelProps {
+  chatPanelRef: React.RefObject<{
+    handleManualTaskAction: (action: {
+      type: StoreFunctionKeys;
+      params: any;
+    }) => void;
+  } | null>;
+}
+
+export default function TaskPanel({ chatPanelRef }: TaskPanelProps) {
+  const { tasks } = useTaskStore();
   const [newTaskTitle, setNewTaskTitle] = useState("");
+
+  const handleTaskChange = (action: {
+    type: StoreFunctionKeys;
+    params: any;
+  }) => {
+    dispatchAction({
+      ...action,
+      callback: () => {
+        if (chatPanelRef?.current) {
+          chatPanelRef.current.handleManualTaskAction(action);
+        }
+      },
+    });
+  };
 
   const addTask = () => {
     if (newTaskTitle.trim() === "") return;
@@ -20,16 +45,18 @@ export default function TodoPanel() {
       title: newTaskTitle,
       description: "New task description",
       progress: 0,
-      completed: false,
       status: "normal",
     };
 
-    addTaskToStore(newTask);
+    handleTaskChange({
+      type: "addTask",
+      params: newTask,
+    });
     setNewTaskTitle("");
   };
 
   return (
-    <div className="w-1/2 border-r border-border p-6 overflow-y-auto bg-background">
+    <div className="w-full h-full border-r border-border p-6 overflow-hidden bg-background">
       <div className="flex flex-col h-full">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">Tasks</h1>
@@ -41,6 +68,11 @@ export default function TodoPanel() {
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
             className="flex-1"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                addTask();
+              }
+            }}
           />
           <Button onClick={addTask} className="bg-primary hover:bg-primary/90">
             <PlusCircle className="h-4 w-4 mr-2" />
@@ -50,13 +82,15 @@ export default function TodoPanel() {
 
         <Separator className="mb-6" />
 
-        <div className="space-y-4 flex-1 overflow-y-auto">
-          {tasks.map((task) => (
-            <div key={task.id}>
-              <TaskItem task={task} />
-            </div>
-          ))}
-        </div>
+        <ScrollArea className="flex-1 h-0">
+          <div className="space-y-4 pr-3">
+            {tasks.map((task) => (
+              <div key={task.id}>
+                <TaskItem task={task} onTaskChange={handleTaskChange} />
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );
