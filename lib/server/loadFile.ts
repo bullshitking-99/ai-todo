@@ -1,29 +1,34 @@
 import fs from "fs";
 import path from "path";
 
-export const runtime = "nodejs";
-
-// 简单缓存，避免重复读取
-const fileCache: Record<string, string> = {};
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
 /**
- * 加载项目根目录下的任意源码文件，带缓存
- * @param relativePath 相对项目根目录的路径，如 "lib/store.ts"
+ * 通用文件加载函数（文本文件）
+ * - 本地开发时用 fs 读取 public 下文件
+ * - 生产部署时用 fetch 读取 public 静态资源
+ * @param relativePath 相对 public 的路径，例如 "prompts/chatChain.txt"
  */
-export function loadFile(relativePath: string): string {
-  if (!fileCache[relativePath]) {
-    const fullPath = path.resolve(process.cwd(), relativePath);
-    fileCache[relativePath] = fs.readFileSync(fullPath, "utf-8");
+export async function loadFile(relativePath: string): Promise<string> {
+  if (process.env.NODE_ENV === "development") {
+    try {
+      const fullPath = path.join(process.cwd(), "public", relativePath);
+      return fs.readFileSync(fullPath, "utf-8");
+    } catch (err) {
+      console.error(`[loadFile] 本地读取失败: ${relativePath}`, err);
+      throw err;
+    }
+  } else {
+    try {
+      const url = `${baseUrl}/${relativePath}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`[loadFile] fetch 失败: ${url}`);
+      }
+      return await res.text();
+    } catch (err) {
+      console.error(`[loadFile] fetch 错误: ${relativePath}`, err);
+      throw err;
+    }
   }
-  return fileCache[relativePath];
-
-  // 在 edge runtime下，生产时使用require动态加载
-  // if (process.env.NODE_ENV === "development") {
-
-  // } else {
-  //   return require(`@gen/${path.basename(
-  //     relativePath,
-  //     path.extname(relativePath)
-  //   )}`).default;
-  // }
 }

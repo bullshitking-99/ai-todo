@@ -12,7 +12,8 @@ export async function POST(req: Request) {
       action,
       tasks,
       history,
-      storeCode: loadFile("lib/store.ts"),
+      // storeCode: loadFile("lib/store.ts"),
+      storeCode: "",
     });
 
     const responseStream = new ReadableStream({

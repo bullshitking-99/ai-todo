@@ -20,7 +20,8 @@ export async function POST(request: Request) {
         input,
         tasks: JSON.stringify(tasks),
         history: JSON.stringify(history),
-        storeCode: loadFile("lib/store.ts"),
+        // storeCode: loadFile("lib/store.ts"),
+        storeCode: "",
       })
       .then(async (llmStream) => {
         try {
