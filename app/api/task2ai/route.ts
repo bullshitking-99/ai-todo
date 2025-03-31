@@ -6,6 +6,7 @@ import { loadFile } from "@/lib/server/loadFile";
 
 export async function POST(req: Request) {
   const { taskChain } = await createChains();
+  const storeCode = await loadFile("gen/store.ts");
 
   const { action, tasks, history } = await req.json();
 
@@ -14,8 +15,7 @@ export async function POST(req: Request) {
       action,
       tasks,
       history,
-      // storeCode: loadFile("lib/store.ts"),
-      storeCode: "",
+      storeCode,
     });
 
     const responseStream = new ReadableStream({

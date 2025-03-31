@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const { chatChain } = await createChains();
+    const storeCode = await loadFile("gen/store.ts");
 
     const { input, tasks, history } = await request.json();
 
@@ -22,8 +23,7 @@ export async function POST(request: Request) {
         input,
         tasks: JSON.stringify(tasks),
         history: JSON.stringify(history),
-        // storeCode: loadFile("lib/store.ts"),
-        storeCode: "",
+        storeCode,
       })
       .then(async (llmStream) => {
         try {

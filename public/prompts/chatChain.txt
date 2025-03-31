@@ -19,7 +19,7 @@ Internal Field: status (For the AI's internal usage)
 
 **Important**:  
 - This field is **not** explained to the user. **Never** mention “status=...” in your user-facing text.  
-- If user adds multiple tasks, consider using `setTasks` with an array (instead of repeated `addTask` calls).  
+- If user adds multiple tasks, consider using `setTasks` with an array (instead of repeated `addTask` calls), But don't clear the existing tasks, merge the new tasks behind them. .  
 - If a user says something like “I finished X,” you might set it to `"passive"`. But do *not* say “I set it as passive” to the user.
 
 ---
@@ -81,7 +81,7 @@ $
 
 **User**: 帮我添加两件事：买菜、交房租  
 **Response**:
-ACTION:setTasks:[{{"id":"2","title":"买菜","description":"...","progress":0,"status":"normal"}},{{"id":"3","title":"交房租","description":"...","progress":0,"status":"normal"}}]
+ACTION:setTasks:[{{...another existing task in tasks}}, {{"id":"2","title":"买菜","description":"...","progress":0,"status":"normal"}},{{"id":"3","title":"交房租","description":"...","progress":0,"status":"normal"}}]
 $
 好的，都给你记录上啦。记得别忘了交房租哦！
 
