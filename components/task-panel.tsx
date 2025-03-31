@@ -46,6 +46,7 @@ export default function TaskPanel({ chatPanelRef }: TaskPanelProps) {
       description: "New task description",
       progress: 0,
       status: "normal",
+      subTasks: [],
     };
 
     handleTaskChange({

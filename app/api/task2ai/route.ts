@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { createChains } from "@/lib/llm/chains";
 import { loadFile } from "@/lib/server/loadFile";
 
-// export const runtime = "nodejs";
-
 export async function POST(req: Request) {
   const { taskChain } = await createChains();
   const storeCode = await loadFile("gen/store.ts");

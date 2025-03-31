@@ -8,6 +8,14 @@ export interface Task {
   description: string;
   progress: number;
   status: TaskStatus;
+  subTasks: SubTask[];
+}
+
+export interface SubTask {
+  id: string;
+  content: string;
+  step: number;
+  finished: boolean;
 }
 
 export interface TaskStore {
@@ -26,6 +34,32 @@ export const useTaskStore = create<TaskStore>((set) => ({
       description: "人生就该有节奏，放肆的生活，让我来跳舞",
       progress: 30,
       status: "normal",
+      subTasks: [
+        {
+          id: "1-1",
+          content: "Create color palette",
+          step: 25,
+          finished: true,
+        },
+        {
+          id: "1-2",
+          content: "Design component library",
+          step: 25,
+          finished: true,
+        },
+        {
+          id: "1-3",
+          content: "Implement components",
+          step: 25,
+          finished: false,
+        },
+        {
+          id: "1-4",
+          content: "Document usage guidelines",
+          step: 25,
+          finished: false,
+        },
+      ],
     },
   ],
   addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),

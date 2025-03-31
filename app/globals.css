@@ -144,8 +144,6 @@
 
 /* Task animations */
 .task-container {
-  max-height: 300px;
-  overflow: hidden;
   background: linear-gradient(
     to bottom,
     rgba(var(--card-rgb), 0) 0%,
@@ -161,6 +159,7 @@
   max-height: 0;
   margin: 0 !important;
   padding: 0;
+  overflow: hidden;
   background: linear-gradient(
     to bottom,
     rgba(var(--destructive-rgb), 0.05) 0%,
@@ -176,13 +175,26 @@
 
 @keyframes task-appear {
   from {
-    max-height: 0;
     transform: translateY(20px);
     opacity: 0;
   }
   to {
-    max-height: 300px;
     transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Checkbox animation */
+@keyframes checkbox-check {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
     opacity: 1;
   }
 }
