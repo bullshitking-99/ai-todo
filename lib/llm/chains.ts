@@ -37,7 +37,3 @@ export async function createChains() {
 
   return { chatChain, taskChain };
 }
-
-const { chatChain, taskChain } = await createChains();
-
-export { chatChain, taskChain };

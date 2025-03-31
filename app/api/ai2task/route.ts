@@ -1,4 +1,4 @@
-import { chatChain } from "@/lib/llm/chains";
+import { createChains } from "@/lib/llm/chains";
 import { loadFile } from "@/lib/server/loadFile";
 import { NextResponse } from "next/server";
 
@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
+    const { chatChain } = await createChains();
+
     const { input, tasks, history } = await request.json();
 
     const encoder = new TextEncoder();
