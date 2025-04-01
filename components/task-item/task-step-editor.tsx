@@ -25,7 +25,10 @@ export default function TaskStepsEditor({
 
   useEffect(() => {
     // Calculate total percentage whenever subTasks change
-    const total = localSubTasks.reduce((sum, task) => sum + task.step, 0);
+    const total = localSubTasks.reduce(
+      (sum, task) => sum + (task.step || 0),
+      0
+    );
     setTotalPercentage(total);
 
     // Validate total percentage
@@ -45,7 +48,7 @@ export default function TaskStepsEditor({
   };
 
   const handleStepChange = (id: string, stepValue: string) => {
-    const step = Number.parseInt(stepValue) || 0;
+    const step = Number.parseInt(stepValue);
     setLocalSubTasks((prev) =>
       prev.map((s) => (s.id === id ? { ...s, step } : s))
     );
@@ -97,8 +100,6 @@ export default function TaskStepsEditor({
                 value={step.step}
                 onChange={(e) => handleStepChange(step.id, e.target.value)}
                 className="w-16"
-                min="0"
-                max="100"
               />
               <span className="text-xs">%</span>
             </div>
@@ -118,7 +119,7 @@ export default function TaskStepsEditor({
         variant="outline"
         size="sm"
         onClick={handleAddStep}
-        className="w-full mt-2 border-dashed border-2 border-primary bg-transparent hover:bg-transparent"
+        className="w-full mt-2 [border-style:dashed] [border-width:1px] [border-dash-length:8px] [border-dash-gap:16px] border-primary hover:border-primary dark:border-primary dark:hover:border-primary bg-transparent hover:bg-transparent"
       >
         <PlusCircle className="h-4 w-4 mr-2" />
         Add Step

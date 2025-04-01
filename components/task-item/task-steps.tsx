@@ -23,7 +23,7 @@ export default function TaskSteps({ subTasks, onChange }: TaskStepsProps) {
       <div className="space-y-3">
         {subTasks.map((step) => (
           <div key={step.id} className="flex items-center gap-3 group">
-            <div className="relative">
+            <div className="relative flex items-center justify-center w-5 h-5">
               <Checkbox
                 id={`step-${step.id}`}
                 checked={step.finished}

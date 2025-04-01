@@ -54,13 +54,40 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
   const taskCompleted = task.progress === 100;
 
   const handleSave = () => {
+    // Ensure steps add up to 100%
+    const totalSteps = editedSubTasks.reduce(
+      (total, step) => total + step.step,
+      0
+    );
+
+    let finalSubTasks = [...editedSubTasks];
+
+    // If steps don't add up to 100%, distribute evenly
+    if (totalSteps !== 100) {
+      const evenPercentage = Math.floor(100 / finalSubTasks.length);
+      const remainder = 100 - evenPercentage * finalSubTasks.length;
+
+      finalSubTasks = finalSubTasks.map((step, index) => ({
+        ...step,
+        step: evenPercentage + (index === 0 ? remainder : 0),
+      }));
+    }
+
+    // Calculate progress based on completed steps
+    const completedSteps = finalSubTasks.filter((step) => step.finished);
+    const completedPercentage = completedSteps.reduce(
+      (total, step) => total + step.step,
+      0
+    );
+
     onTaskChange({
       type: "updateTask",
       params: {
         ...task,
         title: editedTask.title,
         description: editedTask.description,
-        progress: editedTask.progress,
+        progress: completedPercentage,
+        subTasks: finalSubTasks,
       },
     });
     setIsEditing(false);
@@ -137,21 +164,21 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
 
   return (
     <Card className={`p-4 transition-all hover:shadow-md ${getCardClasses()}`}>
-      {!isEditing ? (
+      {isEditing ? (
         <div className="space-y-3">
           <Input
             value={editedTask.title}
             onChange={(e) =>
               setEditedTask({ ...editedTask, title: e.target.value })
             }
-            className="font-medium"
+            className="font-medium border-2 "
           />
           <Textarea
             value={editedTask.description}
             onChange={(e) =>
               setEditedTask({ ...editedTask, description: e.target.value })
             }
-            className="text-sm resize-none h-20"
+            className="text-sm resize-none h-20 border-2 "
           />
 
           <div className="mt-4">
@@ -172,8 +199,8 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
           </div>
         </div>
       ) : (
-        <>
-          <div className="flex justify-between items-start mb-2">
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-start ">
             <div className="flex-1 pr-4">
               <h3 className="font-medium text-foreground">{task.title}</h3>
               <p className="text-sm text-muted-foreground">
@@ -192,14 +219,10 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  >
+                  <button className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent">
                     <MoreHorizontal className="h-4 w-4" />
                     <span className="sr-only">More options</span>
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => setIsEditing(true)}>
@@ -216,7 +239,7 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
             </div>
           </div>
 
-          <div className="mt-4">
+          <div>
             <div className="flex justify-between items-center mb-1 text-xs">
               <span>Progress</span>
               <span>{task.progress}%</span>
@@ -228,9 +251,7 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
           </div>
 
           {task.subTasks.length > 0 && (
-            <div className="mt-4">
-              <TaskSteps subTasks={task.subTasks} onChange={handleStepChange} />
-            </div>
+            <TaskSteps subTasks={task.subTasks} onChange={handleStepChange} />
           )}
 
           {task.progress === 100 && (
@@ -239,7 +260,7 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
               <span>Completed</span>
             </div>
           )}
-        </>
+        </div>
       )}
     </Card>
   );
