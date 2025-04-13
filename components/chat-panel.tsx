@@ -13,23 +13,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTaskStore } from "@/lib/store";
-import { getAIResponse, getTaskAIResponse } from "@/lib/llm/apis";
+import { getTaskAIResponse } from "@/lib/request/apis";
 import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
+import { chatWithAgent } from "@/lib/request/chatWithAgent";
+import { typeText } from "@/lib/utils";
+
+export type AgentStep = {
+  type: "tool_call" | "tool_result";
+  toolName: string;
+  displayText: string;
+};
 
 export interface Message {
   id: string;
-  content: string;
   sender: "user" | "ai";
+  /** 最终显示的正文内容（对 AI 来说是回答） */
+  content: string;
+  /** 是否正在流式更新 */
   isStreaming?: boolean;
+  /** 流式完整内容 */
   fullContent?: string;
+  /** 已显示字符数 */
   streamedChars?: number;
+  /** 仅 AI 消息：过程步骤（工具调用轨迹） */
+  steps?: AgentStep[];
 }
 
 export default forwardRef(function ChatPanel(props, ref) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: Date.now().toString(),
-      content: "Hello! How can I help you with your tasks today?",
+      content: "你好呀，今天有什么可以帮你的~",
       sender: "ai",
     },
   ]);
@@ -60,37 +74,97 @@ export default forwardRef(function ChatPanel(props, ref) {
         isStreaming: true,
         fullContent: "",
         streamedChars: 0,
+        steps: [],
       },
     ]);
 
     try {
-      await getAIResponse(
-        userMessage,
+      await chatWithAgent({
+        input: userMessage,
         tasks,
-        messages,
-        // Stream message
-        (chunk) => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === responseId
-                ? {
-                    ...msg,
-                    fullContent: (msg.fullContent || "") + chunk,
-                    content: (msg.fullContent || "") + chunk,
-                    streamedChars: (msg.streamedChars || 0) + chunk.length,
-                    isStreaming: true,
-                  }
-                : msg
-            )
-          );
-        },
-        // Handle action
-        (action) => {
-          dispatchAction(action);
-        }
-      );
+        onStream: (chunk) => {
+          if (chunk.type === "ai" && chunk.content) {
+            const fullContent = chunk.content;
+            // 模拟打字机效果
+            typeText({
+              fullText: fullContent,
+              onUpdate: (partial) => {
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === responseId
+                      ? {
+                          ...msg,
+                          content: partial,
+                          fullContent,
+                          streamedChars: partial.length,
+                          isStreaming: true,
+                        }
+                      : msg
+                  )
+                );
+              },
+              onDone: () => {
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === responseId ? { ...msg, isStreaming: false } : msg
+                  )
+                );
+              },
+            });
+          }
 
-      // Finalize message
+          if (chunk.type === "tool_call") {
+            const newStep = {
+              type: "tool_call" as const,
+              toolName: chunk.toolName,
+              displayText: "", // 逐字打印用
+            };
+
+            // 先插入空 step（带 displayText）
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === responseId
+                  ? {
+                      ...msg,
+                      steps: [...(msg.steps || []), newStep],
+                    }
+                  : msg
+              )
+            );
+
+            // 再通过 typeText 逐字更新 displayText
+            typeText({
+              fullText: `🛠️ 正在调用工具：${chunk.toolName}`,
+              onUpdate: (partial) => {
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === responseId
+                      ? {
+                          ...msg,
+                          steps: (msg.steps || []).map((s, i, arr) =>
+                            i === arr.length - 1
+                              ? { ...s, displayText: partial }
+                              : s
+                          ),
+                        }
+                      : msg
+                  )
+                );
+              },
+            });
+          }
+
+          if (chunk.type === "tool_result") {
+            try {
+              dispatchAction(chunk.result);
+            } catch (err) {
+              console.warn("⚠️ dispatchAction failed:", err);
+            }
+          }
+        },
+      });
+
+      // Finalize
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === responseId ? { ...msg, isStreaming: false } : msg
@@ -217,20 +291,31 @@ export default forwardRef(function ChatPanel(props, ref) {
                   message.sender === "user" ? "flex justify-end" : "block"
                 } animate-message-fade-in`}
               >
-                {message.sender === "user" ? (
-                  <div className="max-w-[80%] rounded-lg p-4 shadow-sm message-gradient text-primary-foreground">
-                    <p>{message.content}</p>
-                  </div>
-                ) : (
-                  <div className="text-foreground pr-4">
-                    <p className="leading-relaxed">
-                      {message.content}
-                      {message.isStreaming && (
-                        <span className="ml-1 inline-block w-1.5 h-4 bg-foreground/70 animate-pulse" />
-                      )}
+                <div
+                  className={`${
+                    message.sender === "user"
+                      ? "max-w-[80%] rounded-lg p-4 shadow-sm message-gradient text-primary-foreground"
+                      : "text-foreground pr-4"
+                  }`}
+                >
+                  {/* 显示处理过程 steps */}
+                  {message.steps?.map((step, i) => (
+                    <p
+                      key={i + step.toolName}
+                      className="opacity-60 leading-relaxed mb-1"
+                    >
+                      {step.displayText}
                     </p>
-                  </div>
-                )}
+                  ))}
+
+                  {/* 显示最终内容 */}
+                  <p className="leading-relaxed">
+                    {message.content}
+                    {message.isStreaming && (
+                      <span className="ml-1 inline-block w-1.5 h-4 bg-foreground/70 animate-pulse" />
+                    )}
+                  </p>
+                </div>
               </div>
             ))}
             <div ref={messagesEndRef} />

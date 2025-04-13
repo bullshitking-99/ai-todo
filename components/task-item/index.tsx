@@ -40,7 +40,7 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
     progress: task.progress,
   });
   const [editedSubTasks, setEditedSubTasks] = useState<SubTask[]>([
-    ...task.subTasks,
+    ...(task?.subTasks || []),
   ]);
 
   useEffect(() => {
@@ -129,7 +129,7 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
 
   const handleCompleteTask = () => {
     // Mark all steps as completed
-    const updatedSubTasks = task.subTasks.map((step) => ({
+    const updatedSubTasks = task?.subTasks?.map((step) => ({
       ...step,
       finished: true,
     }));
@@ -139,7 +139,7 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
       params: {
         ...task,
         progress: 100,
-        subTasks: updatedSubTasks,
+        subTasks: updatedSubTasks || [],
       },
     });
   };
@@ -250,7 +250,7 @@ export default function TaskItem({ task, onTaskChange }: TaskItemProps) {
             />
           </div>
 
-          {task.subTasks.length > 0 && (
+          {task?.subTasks?.length > 0 && (
             <TaskSteps subTasks={task.subTasks} onChange={handleStepChange} />
           )}
 

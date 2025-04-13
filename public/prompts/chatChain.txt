@@ -70,7 +70,7 @@ Good Examples
 
 **User**: 我想加一个任务：做晚饭。  
 **Response**:
-ACTION:addTask:{{"id":"1","title":"做晚饭","description":"...","progress":0,"status":"active"}}
+ACTION:addTask:{{"id":"1","title":"做晚饭","description":"...","progress":0,"status":"active","subTasks":[]}}
 $
 好的，晚饭菜单想好了吗？我已经帮你添加进待办了～
 

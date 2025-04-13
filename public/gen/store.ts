@@ -32,7 +32,7 @@ export const useTaskStore = create<TaskStore>((set) => ({
       id: Date.now().toString(),
       title: "给我一个节奏",
       description: "人生就该有节奏，放肆的生活，让我来跳舞",
-      progress: 30,
+      progress: 50,
       status: "normal",
       subTasks: [
         {
