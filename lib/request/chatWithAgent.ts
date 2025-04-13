@@ -47,7 +47,7 @@ export async function chatWithAgent({
         const json = part.replace(/^data:\s*/, "");
         try {
           const parsed = JSON.parse(json);
-          // console.log("📥 Agent stream chunk:", parsed);
+          console.log("📥 Agent stream chunk:", parsed);
 
           onStream?.(parsed);
         } catch (err) {
@@ -57,7 +57,7 @@ export async function chatWithAgent({
 
       // 可监听结束事件
       if (part.startsWith("event: end")) {
-        // console.log("✅ agent stream 完成");
+        console.log("✅ agent stream 完成");
       }
     }
   }

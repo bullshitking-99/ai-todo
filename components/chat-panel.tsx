@@ -113,9 +113,9 @@ export default forwardRef(function ChatPanel(props, ref) {
             });
           }
 
-          if (chunk.type === "tool_call") {
+          if (chunk.type === "tool_call" || chunk.type === "tool_result") {
             const newStep = {
-              type: "tool_call" as const,
+              type: chunk.type,
               toolName: chunk.toolName,
               displayText: "", // 逐字打印用
             };
@@ -132,9 +132,14 @@ export default forwardRef(function ChatPanel(props, ref) {
               )
             );
 
+            const fullText =
+              chunk.type === "tool_call"
+                ? `🛠️ 正在调用工具：${chunk.toolName}`
+                : `✅ 工具调用完成`;
+
             // 再通过 typeText 逐字更新 displayText
             typeText({
-              fullText: `🛠️ 正在调用工具：${chunk.toolName}`,
+              fullText,
               onUpdate: (partial) => {
                 setMessages((prev) =>
                   prev.map((msg) =>
