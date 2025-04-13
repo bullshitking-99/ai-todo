@@ -19,11 +19,13 @@ Zustand Store 源码：
 请输出一个 JSON 对象，格式如下：
 {{
   "type": storeCode 中定义的方法名,
-  "params": 方法参数，
+  "params": type方法对应的参数，
 }}
 
 注意事项：
 1. 仅返回 JSON 对象，不要包含其它说明文字。
+2. 该对象需要可以在前端成功dispatch，所以
+  a. 注意 params 和 对应方法所需参数类型的一致，不要捏造与storeCode中函数定义无关的type或params。
 `,
   inputVariables: ["tasks", "storeCode", "input"],
 });

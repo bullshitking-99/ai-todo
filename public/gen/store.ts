@@ -26,6 +26,16 @@ export interface TaskStore {
   setTasks: (tasks: Task[]) => void;
 }
 
+// 为任务属性补全初始值，避免llm返回残缺数据导致报错
+const createInitialTask = (): Task => ({
+  id: Date.now().toString(),
+  title: "",
+  description: "",
+  progress: 0,
+  status: "normal",
+  subTasks: [],
+});
+
 export const useTaskStore = create<TaskStore>((set) => ({
   tasks: [
     {
@@ -62,14 +72,20 @@ export const useTaskStore = create<TaskStore>((set) => ({
       ],
     },
   ],
-  addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),
+  addTask: (task) =>
+    set((state) => ({
+      tasks: [...state.tasks, { ...createInitialTask(), ...task }],
+    })),
   deleteTask: (id) =>
     set((state) => ({ tasks: state.tasks.filter((task) => task.id !== id) })),
   updateTask: (updatedTask) =>
     set((state) => ({
       tasks: state.tasks.map((task) =>
-        task.id === updatedTask.id ? { ...updatedTask } : task
+        task.id === updatedTask.id
+          ? { ...createInitialTask(), ...updatedTask }
+          : task
       ),
     })),
-  setTasks: (tasks) => set({ tasks }),
+  setTasks: (tasks) =>
+    set({ tasks: tasks.map((t) => ({ ...createInitialTask(), ...t })) }),
 }));
