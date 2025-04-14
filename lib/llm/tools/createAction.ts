@@ -3,6 +3,7 @@ import { RunnableSequence } from "@langchain/core/runnables";
 import { tool } from "@langchain/core/tools";
 import { chatModel } from "../initialLLM";
 import { StringOutputParser } from "@langchain/core/output_parsers";
+import { ToolName } from "./type";
 
 const createActionPrompt = new PromptTemplate({
   template: `
@@ -46,7 +47,7 @@ export const createAction = tool(
     return action;
   },
   {
-    name: "createAction",
+    name: ToolName.createAction,
     description:
       "根据用户请求、任务上下文tasks和zustand源代码storeCode，调用大模型生成前端可调用的结构化任务操作，参数为提炼后的任务操作描述，如：增加一个任务，标题为明天去买菜，描述为去菜市场买鸡蛋、牛奶、面包",
   }

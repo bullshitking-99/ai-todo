@@ -11,7 +11,13 @@ export async function POST(req: NextRequest) {
 
   // 可选：先 updateState
   if (updatedValues) {
+    const state1 = await agent.getState(config);
+    console.log("state", state1);
+
     await agent.updateState(config, updatedValues);
+
+    const state2 = await agent.getState(config);
+    console.log("state", state2);
   }
 
   const encoder = new TextEncoder();

@@ -18,11 +18,13 @@ import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
 import { chatWithAgent } from "@/lib/request/chatWithAgent";
 import { resumeAgent } from "@/lib/request/resumeAgent";
 import { typeText } from "@/lib/utils";
+import { ToolName } from "@/lib/llm/tools/type";
 
 export type AgentStep = {
   type: "tool_call" | "tool_result";
   toolName: string;
   displayText: string;
+  extra?: React.ReactNode; // 渲染组件
 };
 
 export interface Message {
@@ -52,7 +54,7 @@ export default forwardRef(function ChatPanel(props, ref) {
 
   // ✅ 抽离 chunk 统一处理逻辑
   const handleAgentStreamChunk = async (chunk: any, responseId: string) => {
-    if (chunk.type === "ai" && chunk.content) {
+    if (chunk.type === "ai") {
       const fullContent = chunk.content;
       // 模拟打字机效果
       typeText({
@@ -76,7 +78,7 @@ export default forwardRef(function ChatPanel(props, ref) {
       });
     }
 
-    if (chunk.type === "tool_call" || chunk.type === "tool_result") {
+    if (chunk.type === "tool_call") {
       const newStep = {
         type: chunk.type,
         toolName: chunk.toolName,
@@ -95,10 +97,7 @@ export default forwardRef(function ChatPanel(props, ref) {
         )
       );
 
-      const fullText =
-        chunk.type === "tool_call"
-          ? `🛠️ 正在调用工具：${chunk.toolName}`
-          : `✅ 调用完成`;
+      const fullText = `🛠️ 正在调用工具：${chunk.toolName}`;
 
       // 再通过 typeText 逐字更新 displayText
       typeText({
@@ -121,18 +120,56 @@ export default forwardRef(function ChatPanel(props, ref) {
     }
 
     if (chunk.type === "tool_result") {
-      try {
-        dispatchAction(chunk.result);
-      } catch (err) {
-        console.warn("⚠️ dispatchAction failed:", err);
+      let extra: React.ReactNode = undefined;
+
+      switch (chunk.toolName) {
+        case ToolName.createAction:
+          dispatchAction(chunk.result);
+          extra = "✅ 调用成功~";
+          // ✅ 自动 resume，递归调用本函数，添加流式内容
+          await resumeAgent({
+            onStream: (nextChunk) => {
+              handleAgentStreamChunk(nextChunk, responseId);
+            },
+          });
+          break;
+        case ToolName.recommendTaskSteps:
+          extra = (
+            <Button
+              size="sm"
+              className="mt-2"
+              onClick={async () => {
+                await resumeAgent({
+                  updatedValues: {
+                    steps: chunk.result, // ⬅️ 你将来的编辑器确认值
+                  },
+                  onStream: (chunk) => {
+                    handleAgentStreamChunk(chunk, responseId);
+                  },
+                });
+              }}
+            >
+              👍 确认子任务并继续
+            </Button>
+          );
+          break;
+        default:
+          break;
       }
 
-      // ✅ 自动 resume，递归调用本函数，添加流式内容
-      await resumeAgent({
-        onStream: (nextChunk) => {
-          handleAgentStreamChunk(nextChunk, responseId);
-        },
-      });
+      // ✅ 更新 message step，包含额外组件
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === responseId
+            ? {
+                ...msg,
+                steps: (msg.steps || []).map((s, i, arr) =>
+                  i === arr.length - 1 ? { ...s, extra } : s
+                ),
+              }
+            : msg
+        )
+      );
     }
   };
 
@@ -299,12 +336,14 @@ export default forwardRef(function ChatPanel(props, ref) {
                 >
                   {/* 显示处理过程 steps */}
                   {message.steps?.map((step, i) => (
-                    <p
-                      key={i + step.toolName}
-                      className="opacity-60 leading-relaxed mb-1"
-                    >
-                      {step.displayText}
-                    </p>
+                    <div key={i + step.toolName} className="mb-2">
+                      {step.displayText && (
+                        <p className="opacity-60 leading-relaxed mb-1">
+                          {step.displayText}
+                        </p>
+                      )}
+                      {step.extra}
+                    </div>
                   ))}
 
                   {/* 显示最终内容 */}

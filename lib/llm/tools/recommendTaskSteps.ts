@@ -3,6 +3,7 @@ import { RunnableSequence } from "@langchain/core/runnables";
 import { tool } from "@langchain/core/tools";
 import { chatModel } from "../initialLLM";
 import { StringOutputParser } from "@langchain/core/output_parsers";
+import { ToolName } from "./type";
 
 const recommendStepsPrompt = new PromptTemplate({
   template: `
@@ -38,7 +39,7 @@ export const recommendTaskSteps = tool(
     return await recommendStepsChain.invoke({ taskSummary });
   },
   {
-    name: "recommendTaskSteps",
+    name: ToolName.recommendTaskSteps,
     description: `
 根据用户的任务目标描述（taskSummary），推荐 3~5 个精炼的子任务，输出格式如下：
 
