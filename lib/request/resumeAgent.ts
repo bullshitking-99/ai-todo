@@ -1,30 +1,22 @@
-import { Task } from "../store";
-
-export async function chatWithAgent({
-  input,
-  tasks,
+export async function resumeAgent({
+  updatedValues,
   onStream,
-  controller, // 用于中断请求
 }: {
-  input: string;
-  tasks: Task[];
+  updatedValues?: Record<string, any>;
   onStream?: (chunk: any) => void;
-  controller?: AbortController;
 }) {
-  const res = await fetch("/api/chatWithAgent", {
+  const res = await fetch("/api/resumeAgent", {
     method: "POST",
     body: JSON.stringify({
-      input,
-      tasks,
+      updatedValues,
     }),
     headers: {
       "Content-Type": "application/json",
     },
-    signal: controller?.signal,
   });
 
   if (!res.ok || !res.body) {
-    throw new Error("请求失败");
+    throw new Error("resumeAgent 请求失败");
   }
 
   const reader = res.body.getReader();
@@ -38,7 +30,6 @@ export async function chatWithAgent({
 
     buffer += decoder.decode(value, { stream: true });
 
-    // 拆解成 event stream 格式（按行 \n\n）
     const parts = buffer.split("\n\n");
     buffer = parts.pop() || "";
 
@@ -47,17 +38,15 @@ export async function chatWithAgent({
         const json = part.replace(/^data:\s*/, "");
         try {
           const parsed = JSON.parse(json);
-          console.log("📥 Agent stream chunk:", parsed);
-
+          console.log("📥 Resume stream chunk:", parsed);
           onStream?.(parsed);
         } catch (err) {
           console.warn("❌ 无法解析 JSON:", json);
         }
       }
 
-      // 可监听结束事件
       if (part.startsWith("event: end")) {
-        console.log("✅ agent stream 结束");
+        console.log("✅ resumeAgent stream 完成");
       }
     }
   }

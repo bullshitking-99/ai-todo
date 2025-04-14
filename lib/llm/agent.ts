@@ -7,7 +7,8 @@ import {
   MessagesAnnotation,
 } from "@langchain/langgraph";
 import { BaseMessageLike } from "@langchain/core/messages";
-import { createAction } from "./tools/createActionTool";
+import { createAction } from "./tools/createAction";
+import { recommendTaskSteps } from "./tools/recommendTaskSteps";
 
 type Prompt = (
   state: typeof MessagesAnnotation.State,
@@ -42,13 +43,15 @@ const prompt = (
 };
 
 const agentCheckpointer = new MemorySaver();
+const ThreadId = "user-123";
 
 const agent = createReactAgent({
   llm: chatModel,
-  tools: [createAction],
+  tools: [createAction, recommendTaskSteps],
+  interruptAfter: ["tools"],
   stateSchema: ChatTaskState,
   prompt: prompt as Prompt,
   checkpointSaver: agentCheckpointer,
 });
 
-export default agent;
+export { agent, ThreadId };

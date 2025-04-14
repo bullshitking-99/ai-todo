@@ -17,6 +17,7 @@ import { getTaskAIResponse } from "@/lib/request/apis";
 import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
 import { chatWithAgent } from "@/lib/request/chatWithAgent";
 import { typeText } from "@/lib/utils";
+import { resumeAgent } from "@/lib/request/resumeAgent";
 
 export type AgentStep = {
   type: "tool_call" | "tool_result";
@@ -31,10 +32,6 @@ export interface Message {
   content: string;
   /** 是否正在流式更新 */
   isStreaming?: boolean;
-  /** 流式完整内容 */
-  fullContent?: string;
-  /** 已显示字符数 */
-  streamedChars?: number;
   /** 仅 AI 消息：过程步骤（工具调用轨迹） */
   steps?: AgentStep[];
 }
@@ -72,8 +69,6 @@ export default forwardRef(function ChatPanel(props, ref) {
         content: "",
         sender: "ai",
         isStreaming: true,
-        fullContent: "",
-        streamedChars: 0,
         steps: [],
       },
     ]);
@@ -95,8 +90,6 @@ export default forwardRef(function ChatPanel(props, ref) {
                       ? {
                           ...msg,
                           content: partial,
-                          fullContent,
-                          streamedChars: partial.length,
                           isStreaming: true,
                         }
                       : msg
@@ -135,7 +128,7 @@ export default forwardRef(function ChatPanel(props, ref) {
             const fullText =
               chunk.type === "tool_call"
                 ? `🛠️ 正在调用工具：${chunk.toolName}`
-                : `✅ 工具调用完成`;
+                : `✅ ${chunk.toolName} 调用完成`;
 
             // 再通过 typeText 逐字更新 displayText
             typeText({
@@ -207,8 +200,6 @@ export default forwardRef(function ChatPanel(props, ref) {
         content: "",
         sender: "ai",
         isStreaming: true,
-        fullContent: "",
-        streamedChars: 0,
       },
     ]);
 
@@ -219,9 +210,7 @@ export default forwardRef(function ChatPanel(props, ref) {
             msg.id === responseId
               ? {
                   ...msg,
-                  fullContent: (msg.fullContent || "") + chunk,
-                  content: (msg.fullContent || "") + chunk,
-                  streamedChars: (msg.streamedChars || 0) + chunk.length,
+                  content: (msg.content || "") + chunk,
                   isStreaming: true,
                 }
               : msg

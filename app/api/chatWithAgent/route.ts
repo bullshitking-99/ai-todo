@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { HumanMessage } from "@langchain/core/messages";
-import agent from "@/lib/llm/agent";
 import { loadFile } from "@/lib/server/loadFile";
+import { agent, ThreadId } from "@/lib/llm/agent";
 
 export async function POST(req: NextRequest) {
   const { input, tasks } = await req.json();
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       const agentStream = await agent.stream(
         { messages: [new HumanMessage(input)], tasks, storeCode },
-        { configurable: { thread_id: "user-123" } }
+        { configurable: { thread_id: ThreadId } }
       );
 
       for await (const chunk of agentStream) {
