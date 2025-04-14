@@ -46,7 +46,7 @@ export async function resumeAgent({
       }
 
       if (part.startsWith("event: end")) {
-        console.log("✅ resumeAgent stream 完成");
+        console.log("✅ resumeAgent stream 结束");
       }
     }
   }

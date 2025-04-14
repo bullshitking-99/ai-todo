@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       const agentStream = await agent.stream(null, {
         ...config,
-        streamMode: "values",
       });
 
       for await (const chunk of agentStream) {

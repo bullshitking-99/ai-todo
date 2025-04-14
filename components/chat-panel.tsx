@@ -16,8 +16,8 @@ import { useTaskStore } from "@/lib/store";
 import { getTaskAIResponse } from "@/lib/request/apis";
 import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
 import { chatWithAgent } from "@/lib/request/chatWithAgent";
-import { typeText } from "@/lib/utils";
 import { resumeAgent } from "@/lib/request/resumeAgent";
+import { typeText } from "@/lib/utils";
 
 export type AgentStep = {
   type: "tool_call" | "tool_result";
@@ -48,8 +48,93 @@ export default forwardRef(function ChatPanel(props, ref) {
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
   const { tasks } = useTaskStore();
+
+  // ✅ 抽离 chunk 统一处理逻辑
+  const handleAgentStreamChunk = async (chunk: any, responseId: string) => {
+    if (chunk.type === "ai" && chunk.content) {
+      const fullContent = chunk.content;
+      // 模拟打字机效果
+      typeText({
+        fullText: fullContent,
+        onUpdate: (partial) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === responseId
+                ? { ...msg, content: partial, isStreaming: true }
+                : msg
+            )
+          );
+        },
+        onDone: () => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === responseId ? { ...msg, isStreaming: false } : msg
+            )
+          );
+        },
+      });
+    }
+
+    if (chunk.type === "tool_call" || chunk.type === "tool_result") {
+      const newStep = {
+        type: chunk.type,
+        toolName: chunk.toolName,
+        displayText: "", // 逐字打印用
+      };
+
+      // 先插入空 step（带 displayText）
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === responseId
+            ? {
+                ...msg,
+                steps: [...(msg.steps || []), newStep],
+              }
+            : msg
+        )
+      );
+
+      const fullText =
+        chunk.type === "tool_call"
+          ? `🛠️ 正在调用工具：${chunk.toolName}`
+          : `✅ 调用完成`;
+
+      // 再通过 typeText 逐字更新 displayText
+      typeText({
+        fullText,
+        onUpdate: (partial) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === responseId
+                ? {
+                    ...msg,
+                    steps: (msg.steps || []).map((s, i, arr) =>
+                      i === arr.length - 1 ? { ...s, displayText: partial } : s
+                    ),
+                  }
+                : msg
+            )
+          );
+        },
+      });
+    }
+
+    if (chunk.type === "tool_result") {
+      try {
+        dispatchAction(chunk.result);
+      } catch (err) {
+        console.warn("⚠️ dispatchAction failed:", err);
+      }
+
+      // ✅ 自动 resume，递归调用本函数，添加流式内容
+      await resumeAgent({
+        onStream: (nextChunk) => {
+          handleAgentStreamChunk(nextChunk, responseId);
+        },
+      });
+    }
+  };
 
   const handleAIResponse = async (userMessage: string) => {
     const newUserMessage: Message = {
@@ -78,87 +163,7 @@ export default forwardRef(function ChatPanel(props, ref) {
         input: userMessage,
         tasks,
         onStream: (chunk) => {
-          if (chunk.type === "ai" && chunk.content) {
-            const fullContent = chunk.content;
-            // 模拟打字机效果
-            typeText({
-              fullText: fullContent,
-              onUpdate: (partial) => {
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === responseId
-                      ? {
-                          ...msg,
-                          content: partial,
-                          isStreaming: true,
-                        }
-                      : msg
-                  )
-                );
-              },
-              onDone: () => {
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === responseId ? { ...msg, isStreaming: false } : msg
-                  )
-                );
-              },
-            });
-          }
-
-          if (chunk.type === "tool_call" || chunk.type === "tool_result") {
-            const newStep = {
-              type: chunk.type,
-              toolName: chunk.toolName,
-              displayText: "", // 逐字打印用
-            };
-
-            // 先插入空 step（带 displayText）
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === responseId
-                  ? {
-                      ...msg,
-                      steps: [...(msg.steps || []), newStep],
-                    }
-                  : msg
-              )
-            );
-
-            const fullText =
-              chunk.type === "tool_call"
-                ? `🛠️ 正在调用工具：${chunk.toolName}`
-                : `✅ ${chunk.toolName} 调用完成`;
-
-            // 再通过 typeText 逐字更新 displayText
-            typeText({
-              fullText,
-              onUpdate: (partial) => {
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === responseId
-                      ? {
-                          ...msg,
-                          steps: (msg.steps || []).map((s, i, arr) =>
-                            i === arr.length - 1
-                              ? { ...s, displayText: partial }
-                              : s
-                          ),
-                        }
-                      : msg
-                  )
-                );
-              },
-            });
-          }
-
-          if (chunk.type === "tool_result") {
-            try {
-              dispatchAction(chunk.result);
-            } catch (err) {
-              console.warn("⚠️ dispatchAction failed:", err);
-            }
-          }
+          handleAgentStreamChunk(chunk, responseId);
         },
       });
 
