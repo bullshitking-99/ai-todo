@@ -48,6 +48,7 @@ export const createAction = tool(
   },
   {
     name: ToolName.createAction,
+    // schema:{}, // 可以使用zod描述参数
     description:
       "根据用户请求、任务上下文tasks和zustand源代码storeCode，调用大模型生成前端可调用的结构化任务操作，参数为提炼后的任务操作描述，如：增加一个任务，标题为明天去买菜，描述为去菜市场买鸡蛋、牛奶、面包",
   }
