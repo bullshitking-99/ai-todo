@@ -2,10 +2,24 @@ import { NextRequest } from "next/server";
 import { HumanMessage } from "@langchain/core/messages";
 import { loadFile } from "@/lib/server/loadFile";
 import { agent, ThreadId } from "@/lib/llm/agent";
+import { workflow, workflowConfig } from "@/workflow";
 
 export async function POST(req: NextRequest) {
   const { input, tasks } = await req.json();
   const storeCode = await loadFile("gen/store.ts");
+
+  for await (const item of await workflow.stream(
+    {
+      userInput: input,
+      context: {
+        storeCode,
+        tasks,
+      },
+    },
+    workflowConfig
+  )) {
+    console.log("stream chunk:", item);
+  }
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({

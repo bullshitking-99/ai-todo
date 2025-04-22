@@ -1,0 +1,55 @@
+import { chatModel } from "@/lib/llm/initialLLM";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { PromptTemplate } from "@langchain/core/prompts";
+import { RunnableSequence } from "@langchain/core/runnables";
+import { task } from "@langchain/langgraph";
+
+const resultFormatterPrompt = new PromptTemplate({
+  template: `
+  你是一个任务管理助手，负责根据用户的输入和上游工作节点的产出进行总结性的反馈；
+  ---
+  你的上游已经有两个工作节点，他们负责产出推荐的任务步骤和在前端修改任务状态的指令:
+  推荐的任务步骤：
+  {recommendTaskSteps}
+  前端修改任务状态的指令：
+  {taskAction}
+  当用户的任务比较简单时，以上工作节点的产出可能为空，这是正常情况；
+  ---
+  还有两个你可以参考的上下文：
+  用户输入的请求：
+  {input}
+  根据对话记忆总结的standalone question：
+  {standaloneQuestion}
+  ---
+  根据这些上下文，生成一个友好、亲和的总结性反馈，带一些emoji就更好了：
+`,
+  inputVariables: [
+    "input",
+    "standaloneQuestion",
+    "recommendTaskSteps",
+    "taskAction",
+  ],
+});
+
+const resultFormatterChain = RunnableSequence.from([
+  resultFormatterPrompt,
+  chatModel,
+  // new StringOutputParser(),
+]);
+
+export const resultFormatter = task(
+  "result_formatter",
+  async (
+    input: string,
+    standaloneQuestion: string,
+    recommendTaskSteps = "",
+    taskAction = ""
+  ) => {
+    return await resultFormatterChain.invoke({
+      input,
+      standaloneQuestion,
+      recommendTaskSteps,
+      taskAction,
+    });
+  }
+);
