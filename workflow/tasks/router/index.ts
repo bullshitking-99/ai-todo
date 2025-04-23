@@ -3,7 +3,6 @@ import { task } from "@langchain/langgraph";
 import { routeSchema } from "./schema";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
-import { StringOutputParser } from "@langchain/core/output_parsers";
 import { Task } from "@/lib/store";
 
 const routerPrompt = new PromptTemplate({
@@ -47,7 +46,6 @@ const routerChatModel = chatModel.withStructuredOutput(routeSchema);
 const routerChain = RunnableSequence.from([
   routerPrompt,
   routerChatModel,
-  // new StringOutputParser(),
 ]);
 
 export const router = task("router", async (input: string, tasks: Task[]) => {

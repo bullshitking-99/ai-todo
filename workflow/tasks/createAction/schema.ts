@@ -5,23 +5,24 @@
 import { z } from "zod";
 
 // 定义基础类型
-const SubTaskSchema = z.object({
-  id: z.string(),
-  content: z.string(),
-  step: z.number(),
-  finished: z.boolean(),
-});
+// 这玩意儿老是出错，先不写了，在 workflow 里手动填进去
+// const SubTaskSchema = z.object({
+//   id: z.string(),
+//   content: z.string(),
+//   step: z.number(),
+//   finished: z.boolean(),
+// });
 
 const TaskSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string(),
-  progress: z.number(),
-  status: z.enum(["normal", "active", "passive"]),
-  subTasks: z
-    .array(SubTaskSchema)
-    .or(z.null())
-    .transform((val) => val ?? []),
+  id: z.string().describe("任务的唯一标识"),
+  title: z.string().describe("任务的标题"),
+  description: z.string().describe("任务的描述"),
+  // progress: z.number(),
+  // status: z.enum(["normal", "active", "passive"]),
+  // subTasks: z
+  //   .array(SubTaskSchema)
+  //   .or(z.null())
+  //   .transform((val) => val ?? []),
 });
 
 // 为每个方法构建一个类型联合体

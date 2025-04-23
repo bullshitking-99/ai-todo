@@ -20,25 +20,16 @@ const createActionPrompt = new PromptTemplate({
 - 用户输入的请求：
 {input}
 
-- 新增任务时的可选子任务步骤（subTask），为空时可忽略：
-{taskSteps}
-
 请严格遵循以下格式和要求生成输出：
 
 1. 仅返回一个**JSON 对象**，不要包含其它说明文字。
 2. 输出格式固定为：
    {{
      "type": storeCode 中定义的方法名，
-     "params": 对应方法的参数（注意是**扁平结构**，不要额外嵌套 "task" 层级）
+     "params": 对应方法的参数（注意是**扁平结构**，不要额外嵌套层级）
    }}
-   ❗例如：
-   - 正确 ✅：{{ "type": "addTask", "params": {{ "id": "...", "title": "...", "subTasks": [...] }} }}
-   - 错误 ❌：{{ "type": "addTask", "params": {{ "task": {{ ... }} }} }}
-
-3. subTasks 必须是一个数组（即使为空），不能为 null。
-4. 所有字段必须与 storeCode 中函数定义所需参数严格一致，**不要添加或省略字段**。
 `,
-  inputVariables: ["tasks", "storeCode", "input", "taskSteps"],
+  inputVariables: ["tasks", "storeCode", "input"],
 });
 
 const createActionChatModel = chatModel.withStructuredOutput(
@@ -57,14 +48,29 @@ export const createAction = task(
     input: string,
     storeCode: string,
     tasks: Task[],
-    taskSteps?: Record<string, string>[]
+    taskSteps?: Record<string, any>
   ) => {
     const action = await createActionChain.invoke({
       tasks: JSON.stringify(tasks),
       storeCode: storeCode,
       input,
-      taskSteps: JSON.stringify(taskSteps || ""),
+      // taskSteps: JSON.stringify(taskSteps?.steps || []), // 嵌套结构太深，会导致LLM出错
     });
-    return action;
+
+    // 手动填充subTask，避免频繁的LLM格式出错
+    let _action;
+    if (action.type === "addTask" || action.type === "updateTask") {
+      _action = {
+        ...action,
+        params: {
+          ...action.params,
+          subTask: taskSteps?.steps || [],
+        },
+      };
+    } else {
+      _action = action;
+    }
+
+    return _action;
   }
 );

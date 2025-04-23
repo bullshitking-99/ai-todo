@@ -32,14 +32,13 @@ export const workflow = entrypoint(
     // 根据用户意图，获取任务起点
     const { nextStep, standaloneQuestion } = await router(userInput, tasks);
 
-    let taskSteps,
-      actions = null;
+    let taskSteps, actions;
 
     if (nextStep === "recommendTaskSteps") {
       taskSteps = await recommendTaskSteps(standaloneQuestion);
     }
 
-    if (nextStep === "createAction") {
+    if (nextStep === "recommendTaskSteps" || nextStep === "createAction") {
       actions = await createAction(userInput, storeCode, tasks, taskSteps);
     }
 

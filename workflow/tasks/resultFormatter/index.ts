@@ -1,5 +1,4 @@
 import { chatModel } from "@/lib/llm/initialLLM";
-import { StringOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { task } from "@langchain/langgraph";
@@ -21,7 +20,7 @@ const resultFormatterPrompt = new PromptTemplate({
   根据对话记忆总结的standalone question：
   {standaloneQuestion}
   ---
-  根据这些上下文，生成一个友好、亲和的总结性反馈，带一些emoji就更好了：
+  根据这些上下文，生成一个友好、亲和、鼓励的总结性反馈（不需要包含任务步骤和指令，这些只是作为参考），带一些emoji就更好了：
 `,
   inputVariables: [
     "input",
@@ -34,7 +33,6 @@ const resultFormatterPrompt = new PromptTemplate({
 const resultFormatterChain = RunnableSequence.from([
   resultFormatterPrompt,
   chatModel,
-  // new StringOutputParser(),
 ]);
 
 export const resultFormatter = task(
