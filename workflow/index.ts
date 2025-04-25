@@ -49,6 +49,6 @@ export const workflow = entrypoint(
       taskSteps
     );
 
-    return anwser;
+    return anwser; // 可以不返回，但是最后还是会触发一次stream
   }
 );

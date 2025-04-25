@@ -7,10 +7,13 @@ import { Task } from "@/lib/store";
 
 const routerPrompt = new PromptTemplate({
   template: `
-你是 chat‑task 工作流中的第一个节点，需要根据上下文来判断下一个执行节点(nextStep) 以及
-输出改写好的独立问题(standaloneQuestion)。以下信息对你决策至关重要，请务必遵守。
+你是 chat‑task 工作流中的第一个节点，需要根据上下文来：
+1. 判断下一个执行节点(nextStep) 
+2. 输出一个基于用户输入的独立问题(standaloneQuestion)，这个问题会抛给下一个执行节点，让他们不用再推测一遍上下文。
 
 ────────────────────────────────
+以下信息对你决策至关重要，请务必遵守：
+
 ### 工作流节点和他们之间的流转关系
 1. **recommendTaskSteps**
    - 触发条件：用户任务 **复杂** 或 **意图模糊**，需要先拆分/规划步骤。
@@ -43,10 +46,7 @@ const routerPrompt = new PromptTemplate({
 
 const routerChatModel = chatModel.withStructuredOutput(routeSchema);
 
-const routerChain = RunnableSequence.from([
-  routerPrompt,
-  routerChatModel,
-]);
+const routerChain = RunnableSequence.from([routerPrompt, routerChatModel]);
 
 export const router = task("router", async (input: string, tasks: Task[]) => {
   const res = await routerChain.invoke({ input, tasks: JSON.stringify(tasks) });

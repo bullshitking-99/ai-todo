@@ -28,7 +28,7 @@ const recommendStepsChain = RunnableSequence.from([
 ]);
 
 export const recommendTaskSteps = task(
-  "recommend_task_steps",
+  "recommendTaskSteps",
   async (standaloneQuestion: string) => {
     const { steps } = await recommendStepsChain.invoke({ standaloneQuestion });
     // 按 store 的格式来，后续可能需要扩展

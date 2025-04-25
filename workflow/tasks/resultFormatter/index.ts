@@ -2,6 +2,7 @@ import { chatModel } from "@/lib/llm/initialLLM";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { task } from "@langchain/langgraph";
+import { resultFormatterSchema } from "./schema";
 
 const resultFormatterPrompt = new PromptTemplate({
   template: `
@@ -30,24 +31,31 @@ const resultFormatterPrompt = new PromptTemplate({
   ],
 });
 
+// const resultFormatterModel = chatModel.withStructuredOutput(
+//   resultFormatterSchema
+// );
+
 const resultFormatterChain = RunnableSequence.from([
   resultFormatterPrompt,
+  // resultFormatterModel, // 使用约束之后还要在prompt声明...，不如直接使用解析出来的content
   chatModel,
 ]);
 
 export const resultFormatter = task(
-  "result_formatter",
+  "resultFormatter",
   async (
     input: string,
     standaloneQuestion: string,
     recommendTaskSteps = "",
     taskAction = ""
   ) => {
-    return await resultFormatterChain.invoke({
+    const { content } = await resultFormatterChain.invoke({
       input,
       standaloneQuestion,
       recommendTaskSteps,
       taskAction,
     });
+
+    return { content };
   }
 );

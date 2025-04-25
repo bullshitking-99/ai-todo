@@ -43,7 +43,7 @@ const createActionChain = RunnableSequence.from([
 ]);
 
 export const createAction = task(
-  "create_action",
+  "createAction",
   async (
     input: string,
     storeCode: string,

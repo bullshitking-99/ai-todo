@@ -15,14 +15,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTaskStore } from "@/lib/store";
 import { getTaskAIResponse } from "@/lib/request/apis";
 import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
-import { chatWithAgent } from "@/lib/request/chatWithAgent";
-import { resumeAgent } from "@/lib/request/resumeAgent";
+
 import { typeText } from "@/lib/utils";
-import { ToolName } from "@/lib/llm/tools/type";
+import {
+  chatWithWorkflow,
+  IWorkFlowChunk,
+} from "@/lib/request/chatWithWorkflow";
 
 export type AgentStep = {
-  type: "tool_call" | "tool_result";
-  toolName: string;
+  name: string;
   displayText: string;
   extra?: React.ReactNode; // 渲染组件
 };
@@ -52,10 +53,65 @@ export default forwardRef(function ChatPanel(props, ref) {
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { tasks } = useTaskStore();
 
-  // ✅ 抽离 chunk 统一处理逻辑
-  const handleAgentStreamChunk = async (chunk: any, responseId: string) => {
-    if (chunk.type === "ai") {
-      const fullContent = chunk.content;
+  // 对 workflow 任务流的每一步进行处理
+  const handleAgentStreamChunk = async (
+    chunk: IWorkFlowChunk,
+    responseId: string
+  ) => {
+    const { task, result } = chunk;
+
+    console.log(chunk);
+
+    if (task === "router") {
+      const { nextStep } = result;
+
+      const taskReply = {
+        resultFormatter: "正在组织回复 ...",
+        recommendTaskSteps: "正在思考任务步骤...",
+        createAction: "正在修改任务状态...",
+      };
+
+      const newStep = {
+        name: nextStep,
+        displayText: "", // 逐字打印用
+      };
+
+      // 先插入空 step（带 displayText）
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === responseId
+            ? {
+                ...msg,
+                steps: [...(msg.steps || []), newStep],
+              }
+            : msg
+        )
+      );
+
+      const fullText = taskReply[nextStep as keyof typeof taskReply];
+
+      // 再通过 typeText 逐字更新 displayText
+      typeText({
+        fullText,
+        onUpdate: (partial) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === responseId
+                ? {
+                    ...msg,
+                    steps: (msg.steps || []).map((s, i, arr) =>
+                      i === arr.length - 1 ? { ...s, displayText: partial } : s
+                    ),
+                  }
+                : msg
+            )
+          );
+        },
+      });
+    }
+
+    if (task === "resultFormatter") {
+      const { content: fullContent } = result;
       // 模拟打字机效果
       typeText({
         fullText: fullContent,
@@ -78,98 +134,12 @@ export default forwardRef(function ChatPanel(props, ref) {
       });
     }
 
-    if (chunk.type === "tool_call") {
-      const newStep = {
-        type: chunk.type,
-        toolName: chunk.toolName,
-        displayText: "", // 逐字打印用
-      };
-
-      // 先插入空 step（带 displayText）
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === responseId
-            ? {
-                ...msg,
-                steps: [...(msg.steps || []), newStep],
-              }
-            : msg
-        )
-      );
-
-      const fullText = `🛠️ 正在调用工具：${chunk.toolName}`;
-
-      // 再通过 typeText 逐字更新 displayText
-      typeText({
-        fullText,
-        onUpdate: (partial) => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === responseId
-                ? {
-                    ...msg,
-                    steps: (msg.steps || []).map((s, i, arr) =>
-                      i === arr.length - 1 ? { ...s, displayText: partial } : s
-                    ),
-                  }
-                : msg
-            )
-          );
-        },
-      });
+    if (task === "recommendTaskSteps") {
+      // TODO: 中断
     }
 
-    if (chunk.type === "tool_result") {
-      let extra: React.ReactNode = undefined;
-
-      switch (chunk.toolName) {
-        case ToolName.createAction:
-          dispatchAction(chunk.result);
-          extra = "✅ 调用成功~";
-          // ✅ 自动 resume，递归调用本函数，添加流式内容
-          await resumeAgent({
-            onStream: (nextChunk) => {
-              handleAgentStreamChunk(nextChunk, responseId);
-            },
-          });
-          break;
-        case ToolName.recommendTaskSteps:
-          extra = (
-            <Button
-              size="sm"
-              className="mt-2"
-              onClick={async () => {
-                await resumeAgent({
-                  updatedValues: {
-                    steps: chunk.result, // ⬅️ 你将来的编辑器确认值
-                  },
-                  onStream: (chunk) => {
-                    handleAgentStreamChunk(chunk, responseId);
-                  },
-                });
-              }}
-            >
-              👍 确认子任务并继续
-            </Button>
-          );
-          break;
-        default:
-          break;
-      }
-
-      // ✅ 更新 message step，包含额外组件
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === responseId
-            ? {
-                ...msg,
-                steps: (msg.steps || []).map((s, i, arr) =>
-                  i === arr.length - 1 ? { ...s, extra } : s
-                ),
-              }
-            : msg
-        )
-      );
+    if (task === "createAction") {
+      // dispatchAction
     }
   };
 
@@ -196,7 +166,7 @@ export default forwardRef(function ChatPanel(props, ref) {
     ]);
 
     try {
-      await chatWithAgent({
+      await chatWithWorkflow({
         input: userMessage,
         tasks,
         onStream: (chunk) => {
@@ -336,7 +306,7 @@ export default forwardRef(function ChatPanel(props, ref) {
                 >
                   {/* 显示处理过程 steps */}
                   {message.steps?.map((step, i) => (
-                    <div key={i + step.toolName} className="mb-2">
+                    <div key={i + step.name} className="mb-2">
                       {step.displayText && (
                         <p className="opacity-60 leading-relaxed mb-1">
                           {step.displayText}
