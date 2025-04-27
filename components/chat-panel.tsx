@@ -14,7 +14,11 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTaskStore } from "@/lib/store";
 import { getTaskAIResponse } from "@/lib/request/apis";
-import { dispatchAction, StoreFunctionKeys } from "@/lib/dispatcher";
+import {
+  dispatchAction,
+  DispatcherAction,
+  StoreFunctionKeys,
+} from "@/lib/dispatcher";
 
 import { typeText } from "@/lib/utils";
 import {
@@ -139,7 +143,7 @@ export default forwardRef(function ChatPanel(props, ref) {
     }
 
     if (task === "createAction") {
-      // dispatchAction
+      dispatchAction(result as DispatcherAction);
     }
   };
 

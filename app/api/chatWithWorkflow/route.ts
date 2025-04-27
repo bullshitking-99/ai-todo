@@ -19,11 +19,19 @@ export async function POST(req: NextRequest) {
 
       // 开始流式传输
       for await (const chunk of stream) {
-        const [task, result] = Object.entries(chunk)[0];
+        let [task, result] = Object.entries(chunk)[0];
 
         // 在当前工作流中属于重复输出，而且还和上一个输出在同一个chunk里
         if (task === "chat-task") {
           break;
+        }
+
+        // 处理中断
+        if (task === "__interrupt__") {
+          const { ns, value } = (result as any)[0];
+          const currentTask = ns[ns.length - 1].split(":")[0];
+          task = `${currentTask}_interrupt`;
+          result = value;
         }
 
         const data = {

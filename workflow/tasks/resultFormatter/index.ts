@@ -21,7 +21,7 @@ const resultFormatterPrompt = new PromptTemplate({
   根据对话记忆总结的standalone question：
   {standaloneQuestion}
   ---
-  根据这些上下文，生成一个友好、亲和、鼓励的总结性反馈（不需要包含任务步骤和指令，这些只是作为参考），带一些emoji就更好了：
+  根据这些上下文，生成一个友好、亲和、鼓励、简短的总结性反馈（不需要包含任务步骤和指令，这些只是作为参考），带一些emoji就更好了：
 `,
   inputVariables: [
     "input",

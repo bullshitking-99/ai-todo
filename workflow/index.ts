@@ -1,5 +1,5 @@
 import { Task } from "@/lib/store";
-import { entrypoint, MemorySaver } from "@langchain/langgraph";
+import { entrypoint, interrupt, MemorySaver } from "@langchain/langgraph";
 import { router } from "./tasks/router";
 import { recommendTaskSteps } from "./tasks/recommendTaskSteps";
 import { createAction } from "./tasks/createAction";
@@ -35,7 +35,8 @@ export const workflow = entrypoint(
     let taskSteps, actions;
 
     if (nextStep === "recommendTaskSteps") {
-      taskSteps = await recommendTaskSteps(standaloneQuestion);
+      const steps = await recommendTaskSteps(standaloneQuestion);
+      taskSteps = steps;
     }
 
     if (nextStep === "recommendTaskSteps" || nextStep === "createAction") {
